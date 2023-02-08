@@ -95,6 +95,10 @@ Whole_Epi_Macro_Zeros <- Epi_Macro_Filter %>%
       ungroup %>% 
       complete(nesting(Season, Station, EventID, DN, Lat, Long), SPECCODE, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
 
+################################################################################################
+#filter(SPECCODE != "LETKIND" & SPECCODE != "POYPEDI" & SPECCODE != "VELIGER" & SPECCODE != "ROTIFER")
+
+
 Whole_Epi_Micro_Zeros <- Epi_Micro_Filter %>% 
     group_by(SPECCODE, Season, Station, EventID, DN, Lat, Long) %>% 
       summarise(Zoop_Bio_Sum = sum(Bio.Liter_New), Zoop_Den_Sum = sum(Den.Liter_New)) %>% 
