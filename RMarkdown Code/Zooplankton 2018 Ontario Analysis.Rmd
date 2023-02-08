@@ -1,0 +1,2082 @@
+---
+title: "Zooplankton 2018 Ontario Analysis"
+author: "Chris Marshall"
+date: "1/26/2023"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE, message = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse, warn.conflicts = FALSE)
+library(cowplot)
+library(ggpubr)
+library(rstatix)
+library(lme4)
+library(lubridate)
+library(ggplot2)
+library(ggbreak)
+library(patchwork)
+```
+
+
+```{r, defining data frame column variables, echo = FALSE, warning = FALSE}
+Zoop_Bio_Den_New <- read_csv("F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Updated Raw Data/Zoop_Bio_Den_New.csv")
+
+Areal_Bio_Den_Zoop <- read_csv("F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Updated Raw Data/Areal_Bio_Den_Zoop.csv")
+
+CountType <- Zoop_Bio_Den_New$CountType
+Strata <- Zoop_Bio_Den_New$Strata
+SPECCODE <- Zoop_Bio_Den_New$SPECCODE
+SUMGROUP <- Zoop_Bio_Den_New$SUMGROUP
+Density <- Zoop_Bio_Den_New$Den.Liter_New
+Biomass <- Zoop_Bio_Den_New$Bio.Liter_New
+Station <- Zoop_Bio_Den_New$Station
+DN <- Zoop_Bio_Den_New$DN
+EventID <- Zoop_Bio_Den_New$EventID
+
+Whole_CountType <- Areal_Bio_Den_Zoop$CountType
+Whole_Strata <- Areal_Bio_Den_Zoop$Strata
+Whole_SPECCODE <- Areal_Bio_Den_Zoop$SPECCODE
+Whole_SUMGROUP <- Areal_Bio_Den_Zoop$SUMGROUP
+Whole_Density <- Areal_Bio_Den_Zoop$Density_L
+Whole_Biomass <- Areal_Bio_Den_Zoop$Biomass_L
+Whole_Station <- Areal_Bio_Den_Zoop$Station
+Whole_DN <- Areal_Bio_Den_Zoop$DN
+Whole_EventID <- Areal_Bio_Den_Zoop$EventCode
+Whole_Basin <- Areal_Bio_Den_Zoop$Basin
+```
+
+
+```{r Completing the dataframes with implicit zeros, echo = TRUE, warning = FALSE}
+# Filters for Epi Strata 
+Epi_Filter <- filter(Zoop_Bio_Den_New, Strata == "epi")
+
+# Filter for Macro CountType
+Epi_Macro_Filter <- filter(Epi_Filter, CountType == "MACRO")
+
+# Removal of Macro Nauplii from Macro filter
+Epi_Macro_Filter <- Epi_Macro_Filter[-c(487, 514, 526, 530, 576, 585, 593, 608),]
+
+# Filter for Micro CountType  
+Epi_Micro_Filter <- filter(Epi_Filter, CountType == "MICRO")
+
+# Completion of Zoop_Bio_Den dataset with implicit zeros for each Zoop_GENERA for each month split by Macro and Micro
+############Checking Epi Sumgroup data instead of Zoop_GENERA
+Epi_Macro_Zeros <- Epi_Macro_Filter %>% 
+    group_by(SUMGROUP, Season, Station, EventID, DN, Lat, Long) %>% 
+      summarise(Zoop_Bio_Sum = sum(Bio.Liter_New), Zoop_Den_Sum = sum(Den.Liter_New)) %>% 
+      ungroup %>% 
+      complete(nesting(Season, Station, EventID, DN, Lat, Long), SUMGROUP, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
+
+Epi_Micro_Zeros <- Epi_Micro_Filter %>% 
+    group_by(SUMGROUP, Season, Station, EventID, DN, Lat, Long) %>% 
+      summarise(Zoop_Bio_Sum = sum(Bio.Liter_New), Zoop_Den_Sum = sum(Den.Liter_New)) %>% 
+      ungroup %>% 
+      complete(nesting(Season, Station, EventID, DN, Lat, Long), SUMGROUP, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
+
+# Joining Micro and Macro values after including implicit zeros for each Zoop_GENERA per EventCodeKey(proxy for station)
+Complete_Epi_Zoop_Bio_Den_New <- full_join(Epi_Macro_Zeros, Epi_Micro_Zeros, copy = F)
+
+#write.csv(Complete_Epi_Zoop_Bio_Den_New, file = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/Complete_Epi_Zoop_Bio_Den_New.csv")
+```
+
+
+```{r echo = TRUE, warning = FALSE}
+#Checking Epi SPECCODE data 
+Whole_Epi_Macro_Zeros <- Epi_Macro_Filter %>% 
+    group_by(SPECCODE, Season, Station, EventID, DN, Lat, Long) %>% 
+      summarise(Zoop_Bio_Sum = sum(Bio.Liter_New), Zoop_Den_Sum = sum(Den.Liter_New)) %>% 
+      ungroup %>% 
+      complete(nesting(Season, Station, EventID, DN, Lat, Long), SPECCODE, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
+
+Whole_Epi_Micro_Zeros <- Epi_Micro_Filter %>% 
+    group_by(SPECCODE, Season, Station, EventID, DN, Lat, Long) %>% 
+      summarise(Zoop_Bio_Sum = sum(Bio.Liter_New), Zoop_Den_Sum = sum(Den.Liter_New)) %>% 
+      ungroup %>% 
+      complete(nesting(Season, Station, EventID, DN, Lat, Long), SPECCODE, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
+
+# Joining Micro and Macro values after including implicit zeros for each Zoop_GENERA per EventCodeKey(proxy for station)
+Whole_Complete_Epi_Zoop_Bio_Den_New <- full_join(Whole_Epi_Macro_Zeros, Whole_Epi_Micro_Zeros, copy = F)
+
+#write.csv(Complete_Epi_Zoop_Bio_Den_New, file = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/Complete_Epi_Zoop_Bio_Den_New.csv")
+```
+
+
+```{r Completing the dataframes with implicit zeros, echo = TRUE, warning = FALSE}
+# Filters for Epi Strata 
+WWC_Filter <- filter(Zoop_Bio_Den_New, Strata == "wwc")
+
+# Completion of Zoop_Bio_Den dataset with implicit zeros for each Zoop_GENERA for each month split by Macro and Micro
+Complete_WWC_Zoop_Bio_Den_New <- WWC_Filter %>% 
+    group_by(SUMGROUP, Season, Station, EventID, DN, Lat, Long) %>% 
+      summarise(Zoop_Bio_Sum = sum(Bio.Liter_New), Zoop_Den_Sum = sum(Den.Liter_New)) %>% 
+      ungroup %>% 
+      complete(nesting(Season, Station, EventID, DN, Lat, Long), SUMGROUP, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
+
+#write.csv(Complete_WWC_Zoop_Bio_Den_New, file = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/Complete_WWC_Zoop_Bio_Den_New.csv")
+```
+
+
+```{r Completing the dataframes with implicit zeros, echo = TRUE, warning = FALSE}
+# Filters for Epi Strata 
+WWC_Filter <- filter(Zoop_Bio_Den_New, Strata == "wwc")
+
+# Completion of Zoop_Bio_Den dataset with implicit zeros for each Zoop_GENERA for each month split by Macro and Micro
+Whole_Complete_WWC_Zoop_Bio_Den_New <- WWC_Filter %>% 
+    group_by(SPECCODE, Season, Station, EventID, DN, Lat, Long) %>% 
+      summarise(Zoop_Bio_Sum = sum(Bio.Liter_New), Zoop_Den_Sum = sum(Den.Liter_New)) %>% 
+      ungroup %>% 
+      complete(nesting(Season, Station, EventID, DN, Lat, Long), SPECCODE, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
+
+#write.csv(Complete_WWC_Zoop_Bio_Den_New, file = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/Complete_WWC_Zoop_Bio_Den_New.csv")
+```
+
+
+```{r Calculating summary stats (sum/mean/sd/se) for each Zoop_GENERA per month, echo = TRUE, warning = FALSE}
+# Applying summary sum/mean/sd values for each Zoop_GENERA per month; note the proper N values for each month for both Macro and Micro Taxa
+
+##############Code edited for SUMGROUP instead of Zoop_GENERA########### Also excluded micro sumgroup data ### Excluding Pred Cla 2/28/2023
+Epi_Sum_Stats <- Complete_Epi_Zoop_Bio_Den_New %>% 
+  filter(SUMGROUP != "OTHER" & SUMGROUP != "MYSID" & SUMGROUP != "VELIGER" & SUMGROUP != "ROTIFER" & SUMGROUP != "pNAUPLII" & SUMGROUP != "BYTH" & SUMGROUP != "CERC") %>% 
+  group_by(SUMGROUP, Season) %>%
+  summarise(All_Bio_SUM = sum(Zoop_Bio_Sum), 
+            All_Den_SUM = sum(Zoop_Den_Sum),
+            All_Bio_MEAN = mean(Zoop_Bio_Sum), 
+            All_Den_MEAN = mean(Zoop_Den_Sum), 
+            All_Bio_SD = sd(Zoop_Bio_Sum), 
+            All_Den_SD = sd(Zoop_Den_Sum),
+            N = n(),
+            All_Bio_SE = All_Bio_SD / sqrt(N), 
+            All_Den_SE = All_Den_SD / sqrt(N))
+
+#filter(MONTH != "Oct")
+#filter for only Byth and Cerc
+Whole_Epi_Sum_Stats <- Whole_Complete_Epi_Zoop_Bio_Den_New %>% 
+  filter(SPECCODE == "BYTLONG" | SPECCODE == "CECPENG" | SPECCODE == "LETKIND" | SPECCODE == "POYPEDI") %>% 
+  group_by(SPECCODE, Season) %>%
+  summarise(All_Bio_SUM = sum(Zoop_Bio_Sum), 
+            All_Den_SUM = sum(Zoop_Den_Sum),
+            All_Bio_MEAN = mean(Zoop_Bio_Sum), 
+            All_Den_MEAN = mean(Zoop_Den_Sum), 
+            All_Bio_SD = sd(Zoop_Bio_Sum), 
+            All_Den_SD = sd(Zoop_Den_Sum),
+            N = n(),
+            All_Bio_SE = All_Bio_SD / sqrt(N), 
+            All_Den_SE = All_Den_SD / sqrt(N))
+
+#write.csv(Epi_Sum_Stats, file = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/Epi_Sum_Stats.csv")
+
+#write.csv(Whole_Epi_Sum_Stats, file = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/PRED_CLA_Epi_Sum_Stats.csv")
+
+#Not finished with this code yet
+#Stats for all epi zooplankton figures with SE bars
+Epi_All_SUM <- Complete_Epi_Zoop_Bio_Den_New %>%
+  filter(SUMGROUP != "OTHER" & SUMGROUP != "MYSID" & SUMGROUP != "VELIGER" & SUMGROUP != "ROTIFER" & SUMGROUP != "pNAUPLII") %>% 
+  group_by(EventID, Season) %>% 
+  summarise(Zoop_Bio_All = sum(Zoop_Bio_Sum),
+            Zoop_Den_All = sum(Zoop_Den_Sum)) %>% 
+            ungroup %>% 
+            complete(nesting(Season, EventID), fill = list(Zoop_Bio_All = 0, Zoop_Den_All = 0))
+              
+#filter(DN == "D" | DN == "N") %>% filter(MONTH != "Oct") %>% 
+####################Late fall samples only include micro - haven't included areal density caculations for macro samples yet.
+
+Epi_All_Stats <- Epi_All_SUM %>%
+  group_by(Season) %>%
+  summarise(Zoop_All_Bio_SUM = sum(Zoop_Bio_All),
+            Zoop_All_Abun_SUM = sum(Zoop_Den_All),
+            Zoop_All_Bio_MEAN = mean(Zoop_Bio_All), 
+            Zoop_All_Abun_MEAN = mean(Zoop_Den_All), 
+            Zoop_All_Bio_SD = sd(Zoop_Bio_All), 
+            Zoop_All_Abun_SD = sd(Zoop_Den_All),
+            N = n(),
+            Zoop_All_Bio_SE = Zoop_All_Bio_SD / sqrt(N), 
+            Zoop_All_Den_SE = Zoop_All_Abun_SD / sqrt(N))
+
+
+#write.csv(Epi_All_Stats, file = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/Epi_SumGroup_Macro_All_Stats.csv")
+```
+
+
+```{r Calculating summary stats (sum/mean/sd/se) for each Zoop_GENERA per month, echo = TRUE, warning = FALSE}
+# Applying summary sum/mean/sd values for each Zoop_GENERA per month; note the proper N values for each month for both Macro and Micro Taxa
+WWC_Sum_Stats <- Complete_WWC_Zoop_Bio_Den_New %>% 
+  filter(SUMGROUP != "OTHER" & SUMGROUP != "MYSID" & SUMGROUP != "BYTH" & SUMGROUP != "CERC") %>% 
+  group_by(SUMGROUP, Season) %>%
+  summarise(All_Bio_SUM = sum(Zoop_Bio_Sum), 
+            All_Den_SUM = sum(Zoop_Den_Sum),
+            All_Bio_MEAN = mean(Zoop_Bio_Sum), 
+            All_Den_MEAN = mean(Zoop_Den_Sum), 
+            All_Bio_SD = sd(Zoop_Bio_Sum), 
+            All_Den_SD = sd(Zoop_Den_Sum),
+            N = n(),
+            All_Bio_SE = All_Bio_SD / sqrt(N), 
+            All_Den_SE = All_Den_SD / sqrt(N))
+
+# Ordering of SUMGROUP column
+
+Whole_WWC_Sum_Stats <- Whole_Complete_WWC_Zoop_Bio_Den_New %>% 
+  filter(SPECCODE == "BYTLONG" | SPECCODE == "CECPENG" | SPECCODE == "LETKIND" | SPECCODE == "POYPEDI") %>% 
+  group_by(SPECCODE, Season) %>%
+  summarise(All_Bio_SUM = sum(Zoop_Bio_Sum), 
+            All_Den_SUM = sum(Zoop_Den_Sum),
+            All_Bio_MEAN = mean(Zoop_Bio_Sum), 
+            All_Den_MEAN = mean(Zoop_Den_Sum), 
+            All_Bio_SD = sd(Zoop_Bio_Sum), 
+            All_Den_SD = sd(Zoop_Den_Sum),
+            N = n(),
+            All_Bio_SE = All_Bio_SD / sqrt(N), 
+            All_Den_SE = All_Den_SD / sqrt(N))
+
+
+WWC_Sum_Stats$SUMGROUP <- factor(WWC_Sum_Stats$SUMGROUP, levels = c("LIMNO", "CALANOID", "CYCLOPOID", "CERC", "BYTH",  "DAPHNID", "BOSMINID", "NDAP"))
+
+Whole_WWC_Sum_Stats$SPECCODE <- factor(Whole_WWC_Sum_Stats$SPECCODE, levels = c("BYTLONG", "CECPENG", "LETKIND", "POYPEDI"))
+
+#write.csv(Whole_WWC_Sum_Stats, file = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/PRED_CLA_WWC_Sum_Stats")
+
+###WWC_Sum_Stats$SUMGROUP <- factor(WWC_Sum_Stats$SUMGROUP, levels = c("LETKIND", "HOLGIBB", "POYPEDI", "BOSLONG", "EUBCORE", "DAPSP", "DAPRETR", "DAPGALEM", "BYTLONG", "CECPENG", "DIYTHOM", "CYCCOPE", "MESCOPE", "MESEDAX" "TROPRASM", "DIACOPE", "LEOASHL", "LEOMINU", "LEOSICI", "SKIOREG", "EPILACU", "EPICOPE", "LIMCOPE", "LIMMACR"))
+
+#Not finished with this code yet
+#Stats for all epi zooplankton figures with SE bars
+WWC_All_SUM <- Complete_WWC_Zoop_Bio_Den_New %>%
+  filter(SUMGROUP != "OTHER" & SUMGROUP != "MYSID" & SUMGROUP != "VELIGER" & SUMGROUP != "ROTIFER" & SUMGROUP != "pNAUPLII") %>% 
+  group_by(EventID, Season) %>% 
+  summarise(Zoop_Bio_All = sum(Zoop_Bio_Sum),
+            Zoop_Den_All = sum(Zoop_Den_Sum)) %>% 
+            ungroup %>% 
+            complete(nesting(Season, EventID), fill = list(Zoop_Bio_All = 0, Zoop_Den_All = 0))
+
+WWC_All_Stats <- WWC_All_SUM %>%
+  group_by(Season) %>%
+  summarise(Zoop_All_Bio_SUM = sum(Zoop_Bio_All),
+            Zoop_All_Abun_SUM = sum(Zoop_Den_All),
+            Zoop_All_Bio_MEAN = mean(Zoop_Bio_All), 
+            Zoop_All_Abun_MEAN = mean(Zoop_Den_All), 
+            Zoop_All_Bio_SD = sd(Zoop_Bio_All), 
+            Zoop_All_Abun_SD = sd(Zoop_Den_All),
+            N = n(),
+            Zoop_All_Bio_SE = Zoop_All_Bio_SD / sqrt(N), 
+            Zoop_All_Den_SE = Zoop_All_Abun_SD / sqrt(N))
+
+
+#write.csv(WWC_All_Stats, file = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/WWC_Sum_Stats")
+```
+
+
+```{r Plotting Biomass and Density Averages for All WWC Taxa, echo = FALSE, warning = FALSE, fig.width = 7, fig.height = 5}
+
+Whole_WWC_Sum_Stats$Season <- factor(Whole_WWC_Sum_Stats$Season, levels = c("Early Spring", "Late Spring", "Early Summer", "Summer", "Late Summer", "Early Fall", "Late Fall"))
+
+WWC_Sum_Stats$Season <- factor(WWC_Sum_Stats$Season, levels = c("Early Spring", "Late Spring", "Early Summer", "Summer", "Late Summer", "Early Fall", "Late Fall"))
+
+# Structure for Barbiero similar color palette
+Barb_Palette <- c("blue2", "cyan3", "yellow2", "orange3", "saddlebrown", "red2", "seagreen4", "mediumorchid4")
+
+# structure for potentially useful color palettes
+crazy_Palette <- c("gray0", "green2", "yellow2", "red2", "navy", "saddlebrown", "magenta3", "cyan3", "orange3", "mediumaquamarine", "seagreen4", "mediumorchid4", "firebrick")
+crazy_Palette2 <- c("gray0", "green2", "yellow2", "red2", "navy", "saddlebrown", "magenta3", "cyan3")
+
+#plotting average biomass for all taxa from epi per month 
+gg_BIO_All <- ggplot(Whole_WWC_Sum_Stats, aes(x = Season, y = All_Bio_MEAN, fill = SPECCODE)) + 
+  geom_bar(color = "black", stat = "identity") + 
+  #panel border, axis text and title sizes and orientations
+  theme_cowplot() +
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 22), axis.title.y = element_text(size = 26), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 20)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(Barb_Palette)) +
+  labs(x = "Month", y = "Biomass (µg/L)") +
+  ylim(0,1.5)
+
+#plot the above graph
+gg_BIO_All
+
+#ggsave(filename = 'Avg_Pred_Cla_WWC_Bio.TIFF', plot = gg_BIO_All, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment")
+
+#plotting average density for all taxa from epi per month
+gg_DEN_All <- ggplot(data = Whole_WWC_Sum_Stats, aes(x = Season, y = All_Den_MEAN, fill = SPECCODE))  + 
+   geom_bar(color = "black", stat = "identity") + 
+  #panel border, axis text and title sizes and orientations
+  theme_cowplot() +
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 22), axis.title.y = element_text(size = 26), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(Barb_Palette)) +
+  labs(x = "Month", y = "Abundance (#/L)") +
+  ylim(0,0.3)
+
+#plot the above graph
+gg_DEN_All 
+
+#ggsave(filename = 'Avg_Pred_Cla_WWC_Den.TIFF', plot = gg_DEN_All, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+```
+
+
+```{r zoop genera relative abundance transformation code, echo = FALSE, warning = FALSE}
+#code used to group the Zoop_Sum_Stats Mean abundance data for each rotifer genera per month and mutate (transform) the mean values into relative abundances
+WWC_Zoop_Prop <-
+  WWC_Sum_Stats %>%
+    select(SUMGROUP, Season, All_Bio_MEAN, All_Den_MEAN) %>%
+    group_by(Season)%>%
+    mutate(Zoop_Prop_Bio = (All_Bio_MEAN / sum(All_Bio_MEAN) * 100), Zoop_Prop_Abun = (All_Den_MEAN / sum(All_Den_MEAN) * 100))
+
+#write.csv(WWC_Zoop_Prop, file = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/WWC_Zoop_Prop")
+```
+
+
+```{r zoop genera relative abundance and biomass stack graph, echo = FALSE, warning = FALSE, fig.width = 7, fig.height = 5}
+gg_Rel_Zoop_Bio <- ggplot(WWC_Zoop_Prop, aes(x = Season, y = Zoop_Prop_Bio, fill = SUMGROUP)) +
+    geom_bar(color = "black", stat = "identity") + 
+  theme_cowplot() +
+  #panel border, axis text and title sizes and orientations
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14, face = "bold", angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 22), axis.title.y = element_text(size = 26), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(Barb_Palette)) +
+  labs(x = "Month", y = "% Biomass") 
+
+gg_Rel_Zoop_Bio
+
+#ggsave(filename = 'Avg_Zoop_WWC_Bio_PROP.TIFF', plot = gg_Rel_Zoop_Bio, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+
+gg_Rel_Zoop_Den <- ggplot(WWC_Zoop_Prop, aes(x = Season, y = Zoop_Prop_Abun, fill = SUMGROUP)) +
+    geom_bar(color = "black", stat = "identity") + 
+  theme_cowplot() +
+  #panel border, axis text and title sizes and orientations
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14, face = "bold", angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 22), axis.title.y = element_text(size = 26), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(Barb_Palette)) +
+  labs(x = "Month", y = "% Abundance") 
+
+gg_Rel_Zoop_Den 
+
+#ggsave(filename = 'Avg_Zoop_WWC_Den_PROP.TIFF', plot = gg_Rel_Zoop_Den, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+
+WWC_All_Zoop_Figure <- ggarrange(gg_DEN_All, gg_BIO_All, gg_Rel_Zoop_Den, gg_Rel_Zoop_Bio, 
+        labels = c("A", "B", "C", "D"),
+         font.label = list(size = 14, face = "bold"),
+         label.x = c(0, 0, 0, 0), 
+         label.y = c(1, 1, 1.05, 1.05),
+         ncol = 2, nrow = 2, 
+         align = "v",
+         common.legend = TRUE)
+
+WWC_All_Zoop_Figure
+
+#ggsave(filename = 'WWC_All_Zoop_Figure.TIFF', plot = WWC_All_Zoop_Figure, width = 10, height = 8, path = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+```
+
+## Zoop genera absolute abundance and biomass
+
+```{r Plotting Biomass and Density Averages for All Epi Taxa, echo = FALSE, warning = FALSE, fig.width = 7, fig.height = 5}
+
+######## Limnocalanus not removed from samples yet###################################
+
+Whole_Epi_Sum_Stats$SPECCODE <- factor(Whole_Epi_Sum_Stats$SPECCODE, levels = c("BYTLONG", "CECPENG", "LETKIND", "POYPEDI"))
+
+Whole_Epi_Sum_Stats$Season <- factor(Whole_Epi_Sum_Stats$Season, levels = c("Early Spring", "Late Spring", "Early Summer", "Summer", "Late Summer", "Early Fall"))
+
+Epi_Sum_Stats$SUMGROUP <- factor(Epi_Sum_Stats$SUMGROUP, levels = c("LIMNO", "CALANOID", "CYCLOPOID", "CERC", "BYTH",  "DAPHNID", "BOSMINID", "NDAP"))
+
+Epi_Sum_Stats$Season <- factor(Epi_Sum_Stats$Season, levels = c("Early Spring", "Late Spring", "Early Summer", "Summer", "Late Summer", "Early Fall"))
+
+# Structure for Barbiero similar color palette
+Barb_Palette <- c("blue2", "cyan3", "yellow2", "orange3", "saddlebrown", "red2", "seagreen4", "mediumorchid4")
+
+# structure for potentially useful color palettes
+crazy_Palette <- c("gray0", "green2", "yellow2", "red2", "navy", "saddlebrown", "magenta3", "cyan3", "orange3", "mediumaquamarine", "seagreen4", "mediumorchid4", "firebrick")
+crazy_Palette2 <- c("gray0", "green2", "yellow2", "red2", "navy", "saddlebrown", "magenta3", "cyan3")
+
+#plotting average biomass for all taxa from epi per month 
+gg_Epi_BIO_All <- ggplot(Whole_Epi_Sum_Stats, aes(x = Season, y = All_Bio_MEAN, fill = SPECCODE)) + 
+  geom_bar(color = "black", stat = "identity") + 
+  #panel border, axis text and title sizes and orientations
+  theme_cowplot() +
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 24), axis.title.y = element_text(size = 28), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "top", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 20)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(Barb_Palette)) +
+  labs(x = "Month", y = "Biomass (µg/L)") +
+  ylim(0,4)
+
+#X axis text size and angle
+##size = 24, angle = 45, vjust = 1, hjust = 1
+#plot the above graph
+gg_Epi_BIO_All
+
+#ggsave(filename = 'Pred_Cla_Epi_Bio.TIFF', plot = gg_Epi_BIO_All, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+
+#plotting average density for all taxa from epi per month
+gg_Epi_DEN_All <- ggplot(data = Whole_Epi_Sum_Stats, aes(x = Season, y = All_Den_MEAN, fill = SPECCODE))  + 
+   geom_bar(color = "black", stat = "identity") + 
+  #panel border, axis text and title sizes and orientations
+  theme_cowplot() +
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 24), axis.title.y = element_text(size = 28), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(Barb_Palette)) +
+  labs(x = "Month", y = "Abundance (#/L)") +
+  ylim(0,.65)
+
+#plot the above graph
+gg_Epi_DEN_All 
+
+#ggsave(filename = 'Pred_Cla_Epi_Den.TIFF', plot = gg_Epi_DEN_All, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+```
+
+
+```{r zoop genera relative abundance transformation code, echo = FALSE, warning = FALSE}
+#code used to group the Zoop_Sum_Stats Mean abundance data for each rotifer genera per month and mutate (transform) the mean values into relative abundances
+Epi_Zoop_Prop <-
+  Epi_Sum_Stats %>%
+    select(SUMGROUP, Season, All_Bio_MEAN, All_Den_MEAN) %>%
+    group_by(Season)%>%
+    mutate(Zoop_Prop_Bio = (All_Bio_MEAN / sum(All_Bio_MEAN) * 100), Zoop_Prop_Abun = (All_Den_MEAN / sum(All_Den_MEAN) * 100))
+
+#write.csv(WWC_Zoop_Prop, file = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/WWC_Zoop_Prop")
+```
+
+## Zoop genera relative abundance and biomass
+
+```{r zoop genera relative abundance and biomass stack graph, echo = FALSE, warning = FALSE, fig.width = 7, fig.height = 5}
+
+gg_Rel_Epi_Zoop_Bio <- ggplot(Epi_Zoop_Prop, aes(x = Season, y = Zoop_Prop_Bio, fill = SUMGROUP)) +
+    geom_bar(color = "black", stat = "identity") + 
+  theme_cowplot() +
+  #panel border, axis text and title sizes and orientations
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14, face = "bold", angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 24), axis.title.y = element_text(size = 28), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(Barb_Palette)) +
+  labs(x = "Month", y = "% Biomass") 
+
+gg_Rel_Epi_Zoop_Bio
+#ggsave(filename = 'Avg_Rel_Zoop_Epi_Bio.TIFF', plot = gg_Rel_Epi_Zoop_Bio, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+
+gg_Rel_Epi_Zoop_Den <- ggplot(Epi_Zoop_Prop, aes(x = Season, y = Zoop_Prop_Abun, fill = SUMGROUP)) +
+    geom_bar(color = "black", stat = "identity") + 
+  theme_cowplot() +
+  #panel border, axis text and title sizes and orientations
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14, face = "bold", angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 24), axis.title.y = element_text(size = 28), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(Barb_Palette)) +
+  labs(x = "Month", y = "% Abundance") 
+
+gg_Rel_Epi_Zoop_Den 
+#ggsave(filename = 'Avg_Rel_Zoop_Epi_Den.TIFF', plot = gg_Rel_Epi_Zoop_Den, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+
+
+Epi_All_Zoop_Figure <- ggarrange(gg_Epi_DEN_All, gg_Epi_BIO_All, gg_Rel_Epi_Zoop_Den, gg_Rel_Epi_Zoop_Bio, 
+         labels = c("A", "B", "C", "D"),
+         font.label = list(size = 14, face = "bold"),
+         label.x = c(0, 0, 0, 0), 
+         label.y = c(1, 1, 1.05, 1.05),
+         ncol = 2, nrow = 2, 
+         align = "v",
+         common.legend = TRUE)
+
+##size = 24, angle = 45, vjust = 1, hjust = 1
+
+Epi_All_Zoop_Figure
+
+#ggsave(filename = 'Epi_All_Zoop_Figure.TIFF', plot = Epi_All_Zoop_Elements_Figure, width = 10, height = 8, path = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+```
+
+
+```{r Plotting Biomass and Density Averages for All Epi Taxa with error bars, echo = FALSE, warning = FALSE, fig.width = 7, fig.height = 5}
+#Total Summed avg abun values and total Summed error bars for zooplankton
+
+Epi_All_Stats$Season <- factor(Epi_All_Stats$Season, levels = c("Early Spring", "Late Spring", "Early Summer", "Summer", "Late Summer", "Early Fall"))
+
+gg_DEN_All_Epi_Total <- ggplot(Epi_All_Stats, aes(x = Season, y = Zoop_All_Abun_MEAN))  + 
+   geom_bar(color = "black", stat = "identity") + 
+  #panel border, axis text and title sizes and orientations
+  theme_cowplot() +
+  geom_errorbar(aes(ymax = Zoop_All_Abun_MEAN + Zoop_All_Den_SE, ymin = Zoop_All_Abun_MEAN - Zoop_All_Den_SE, position = "identity", width = .25)) +
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14, face = "bold", angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 24), axis.title.y = element_text(size = 28), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(Barb_Palette)) +
+  labs(x = "Month", y = "Abundance (#/L)") +
+  ylim(0, 30)
+
+gg_DEN_All_Epi_Total
+#ggsave(filename = 'Avg_Den_All_Epi_Total.TIFF', plot = gg_DEN_All_Epi_Total, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+
+#Total Summed avg abun values and total Summed error bars for zooplankton
+gg_BIO_All_Epi_Total <- ggplot(Epi_All_Stats, aes(x = Season, y = Zoop_All_Bio_MEAN))  + 
+   geom_bar(color = "black", stat = "identity") + 
+  #panel border, axis text and title sizes and orientations
+  theme_cowplot() +
+  geom_errorbar(aes(ymax = Zoop_All_Bio_MEAN + Zoop_All_Bio_SE, ymin = Zoop_All_Bio_MEAN - Zoop_All_Bio_SE, position = "identity", width = .25)) +
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14, face = "bold", angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 24), axis.title.y = element_text(size = 28), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(Barb_Palette)) +
+  labs(x = "Month", y = "Biomass (µg/L)") 
+
+gg_BIO_All_Epi_Total
+#ggsave(filename = 'Avg_Bio_All_Epi_Total.TIFF', plot = gg_BIO_All_Epi_Total, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+
+Epi_All_Stats_Zoop_Figure <- ggarrange(gg_DEN_All_Epi_Total, gg_BIO_All_Epi_Total,
+        labels = c("A", "B"),
+         font.label = list(size = 14, face = "bold"),
+         label.x = c(0, 0), 
+         label.y = c(1, 1),
+         ncol = 2, nrow = 1, 
+         align = "v",
+         common.legend = TRUE)
+
+Epi_All_Stats_Zoop_Figure
+
+#ggsave(filename = 'Epi_All_Zoop_Stats_Figure.TIFF', plot = Epi_All_Stats_Zoop_Figure, width = 10, height = 8, path = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+```
+
+
+```{r Plotting Biomass and Density Averages for All Epi Taxa with error bars, echo = FALSE, warning = FALSE, fig.width = 7, fig.height = 5}
+#Total Summed avg abun values and total Summed error bars for zooplankton
+
+WWC_All_Stats$Season <- factor(WWC_All_Stats$Season, levels = c("Early Spring", "Late Spring", "Early Summer", "Summer", "Late Summer", "Early Fall", "Late Fall"))
+
+gg_DEN_All_WWC_Total <- ggplot(WWC_All_Stats, aes(x = Season, y = Zoop_All_Abun_MEAN))  + 
+   geom_bar(color = "black", stat = "identity") + 
+  #panel border, axis text and title sizes and orientations
+  theme_cowplot() +
+  geom_errorbar(aes(ymax = Zoop_All_Abun_MEAN + Zoop_All_Den_SE, ymin = Zoop_All_Abun_MEAN - Zoop_All_Den_SE, position = "identity", width = .25)) +
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14, face = "bold", angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 24), axis.title.y = element_text(size = 28), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(Barb_Palette)) +
+  labs(x = "Month", y = "Abundance (#/L)") +
+  ylim(0, 10)
+
+gg_DEN_All_WWC_Total
+#ggsave(filename = 'Avg_Den_All_WWC_Total.TIFF', plot = gg_DEN_All_WWC_Total, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+
+#Total Summed avg abun values and total Summed error bars for zooplankton
+gg_BIO_All_WWC_Total <- ggplot(WWC_All_Stats, aes(x = Season, y = Zoop_All_Bio_MEAN))  + 
+   geom_bar(color = "black", stat = "identity") + 
+  #panel border, axis text and title sizes and orientations
+  theme_cowplot() +
+  geom_errorbar(aes(ymax = Zoop_All_Bio_MEAN + Zoop_All_Bio_SE, ymin = Zoop_All_Bio_MEAN - Zoop_All_Bio_SE, position = "identity", width = .25)) +
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14, face = "bold", angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 24), axis.title.y = element_text(size = 28), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(Barb_Palette)) +
+  labs(x = "Month", y = "Biomass (µg/L)") 
+
+gg_BIO_All_WWC_Total
+#ggsave(filename = 'Avg_Bio_All_WWC_Total.TIFF', plot = gg_BIO_All_WWC_Total, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+
+WWC_All_Stats_Zoop_Figure <- ggarrange(gg_DEN_All_WWC_Total, gg_BIO_All_WWC_Total,
+        labels = c("A", "B"),
+         font.label = list(size = 14, face = "bold"),
+         label.x = c(0, 0), 
+         label.y = c(1, 1),
+         ncol = 2, nrow = 1, 
+         align = "v",
+         common.legend = TRUE)
+
+WWC_All_Stats_Zoop_Figure
+
+#ggsave(filename = 'WWC_All_Zoop_Stats_Figure.TIFF', plot = WWC_All_Stats_Zoop_Figure, width = 10, height = 8, path = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+```
+
+
+
+
+
+
+
+```{r rotifer abundance for each Rot_GENERA per month, echo = FALSE, warning = FALSE}
+#coding for rotifer genera abundance and biomass per month
+Rot_Filter <- filter(Zoop_Bio_Den_New, SUMGROUP == "ROTIFER" & Strata == "epi")
+
+#Summarizing each Rot_GENERA per station for each month; adding zero values for implicit data when certain Rot_GENERA are not encountered
+Taxa_Sum <- Rot_Filter %>%
+  group_by(RotGENERA, MONTH, EventID, Lat, Long) %>% 
+  summarise(Taxa_Bio_Sum = sum(Bio.Liter_New), Taxa_Den_Sum = sum(Den.Liter_New)) %>% 
+  ungroup %>% 
+  complete(nesting(EventID, MONTH, Lat, Long), RotGENERA, fill = list(Taxa_Bio_Sum = 0, Taxa_Den_Sum = 0))
+
+#Applying summary sum/mean/sd values for each Rot_GENERA per month; note the proper N values for each month
+Rot_Sum_Stats <- Taxa_Sum %>%
+  group_by(RotGENERA, MONTH) %>%
+  summarise(Rot_Bio_SUM = sum(Taxa_Bio_Sum), 
+            Rot_Den_SUM = sum(Taxa_Den_Sum),
+            Rot_Bio_MEAN = mean(Taxa_Bio_Sum), 
+            Rot_Den_MEAN = mean(Taxa_Den_Sum), 
+            Rot_Bio_SD = sd(Taxa_Bio_Sum), 
+            Rot_Den_SD = sd(Taxa_Den_Sum),
+            N = n())
+
+# Calculating the Std Error values for each Rot_GENERA per month               
+Rot_SE_Values <- Rot_Sum_Stats %>% 
+  group_by(RotGENERA, MONTH) %>% 
+  summarise(Rot_SE_Bio = Rot_Bio_SD / sqrt(N), 
+            Rot_SE_Den = Rot_Den_SD / sqrt(N))
+
+# Joining the Rot_Sum_Stats dataframe with the SE_Values previously calculated
+Rot_Sum_Stats <- inner_join(Rot_Sum_Stats, Rot_SE_Values, copy = F) 
+
+# Ordering of Rot_GENERA column
+Rot_Sum_Stats$RotGENERA <- factor(Rot_Sum_Stats$RotGENERA, levels = c("Other", "Trichocerca", "Polyarthra", "Synchaeta", "Ascomorpha", "Conochilus", "Keratella", "Kellicottia", "Ploesoma", "Collotheca", "Gastropus", "Asplanchna"))
+
+#write.csv(Rot_Sum_Stats, file = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/Rot_Sum_Stats_New.csv")
+
+#write.csv(Taxa_Sum, file = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/Taxa_Sum_New.csv")
+
+Rot_All_SUM <- Rot_Filter %>%
+  group_by(MONTH, EventID) %>% 
+  summarise(Rot_Bio_All = sum(Bio.Liter_New), Rot_Den_All = sum(Den.Liter_New)) %>% 
+  ungroup %>% 
+  complete(nesting(MONTH, EventID), fill = list(Rot_Bio_All = 0, Rot_Den_All = 0))
+
+Rot_All_Stats <- Rot_All_SUM %>%
+  group_by(MONTH) %>%
+  summarise(All_Bio_SUM = sum(Rot_Bio_All), 
+            All_Den_SUM = sum(Rot_Den_All),
+            All_Bio_MEAN = mean(Rot_Bio_All), 
+            All_Den_MEAN = mean(Rot_Den_All), 
+            All_Bio_SD = sd(Rot_Bio_All), 
+            All_Den_SD = sd(Rot_Den_All),
+            N = n(),
+            All_SE_Bio = All_Bio_SD / sqrt(N), 
+            All_SE_Den = All_Den_SD / sqrt(N))
+
+#write.csv(Rot_All_Stats, file = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/Rot_All_Stats.csv")
+```
+
+
+```{r}
+Stn_Rot_Sum_Stats <- Taxa_Sum %>% 
+  group_by(RotGENERA, EventID) %>%
+  summarise(Stn_Bio_SUM = sum(Taxa_Bio_Sum), 
+            Stn_Den_SUM = sum(Taxa_Den_Sum),
+            Stn_Bio_MEAN = mean(Taxa_Bio_Sum), 
+            Stn_Den_MEAN = mean(Taxa_Den_Sum), 
+            Stn_Bio_SD = sd(Taxa_Bio_Sum), 
+            Stn_Den_SD = sd(Taxa_Den_Sum),
+            N = n())
+```
+
+## Rotifer genera absolute abundance stack graph
+
+```{r rotifer genera absolute abundance stack graph, echo = FALSE, warning = FALSE, fig.width = 7, fig.height = 5}
+#creating a color palette for rotifer genera stack graph
+cb_Palette <- c("gray0", "green2", "yellow2", "red2", "navy", "saddlebrown", "magenta3", "cyan3", "orange3", "mediumaquamarine", "seagreen4", "gray60")
+
+Rot_Sum_Stats$MONTH <- factor(Rot_Sum_Stats$MONTH, levels = c("Apr", "May", "June", "July", "Aug", "Sept", "Oct"))
+
+gg_Rot_Bio <- ggplot(Rot_Sum_Stats, aes(MONTH, Rot_Bio_MEAN, fill = RotGENERA)) +
+  labs(title = "Rotifer Epi Biomass", x = "Month", y = "Biomass (µg/L)", color = "Genera") + 
+  geom_col(color = "black") +
+  theme_cowplot() +
+#panel border, axis text and title sizes and orientations
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 12), axis.title.y = element_text(size = 16), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+  #palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(cb_Palette))
+
+gg_Rot_Bio
+#ggsave(filename = 'RotEpiBio_New.TIFF', plot = gg_Rot_Bio, width = 7, height = 5, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Rotifer Genera")
+
+gg_Rot_Den <- ggplot(Rot_Sum_Stats, aes(MONTH, Rot_Den_MEAN, fill = RotGENERA)) +
+  labs(title = "Rotifer Epi Abundance", x = "Month", y = "Abundance (#/L)", color = "Genera") + 
+  geom_col(color = "black") +
+  theme_cowplot() +
+#panel border, axis text and title sizes and orientations
+   theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 12), axis.title.y = element_text(size = 16), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(cb_Palette))
+
+gg_Rot_Den
+#ggsave(filename = 'RotEpiAbun_New.TIFF', plot = gg_Rot_Den, width = 7, height = 5, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Rotifer Genera")
+```
+
+
+```{r}
+Rot_All_Stats$MONTH <- factor(Rot_All_Stats$MONTH, levels = c("Apr", "May", "June", "July", "Aug", "Sept", "Oct"))
+
+gg_All_Rot_Bio <- ggplot(Rot_All_Stats, aes(MONTH, All_Bio_MEAN)) +
+  labs(title = "Rotifer Epi Biomass", x = "Month", y = "Biomass (µg/L)") + 
+  geom_col(color = "black") +
+  theme_cowplot() +
+  geom_errorbar(aes(ymax = All_Bio_MEAN + All_SE_Bio, ymin = All_Bio_MEAN - All_SE_Bio), position = position_dodge(0.9), width = .3) +
+#panel border, axis text and title sizes and orientations
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 18), axis.title.y = element_text(size = 20), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) 
+  #palette color for bar fills; see Barbiero for reference
+  #scale_fill_manual(values = c(cb_Palette))
+
+gg_All_Rot_Bio
+#ggsave(filename = 'AllRotEpiBio_New.TIFF', plot = gg_All_Rot_Bio, width = 10, height = 8, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Rotifer Genera")
+
+gg_All_Rot_Den <- ggplot(Rot_All_Stats, aes(MONTH, All_Den_MEAN)) +
+  labs(title = "Rotifer Epi Abundance", x = "Month", y = "Abundance (#/L)") + 
+  geom_col(color = "black") +
+  theme_cowplot() +
+  geom_errorbar(aes(ymax = All_Den_MEAN + All_SE_Den, ymin = All_Den_MEAN - All_SE_Den), position = position_dodge(0.9), width = .3) +
+#panel border, axis text and title sizes and orientations
+   theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 18), axis.title.y = element_text(size = 20), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(cb_Palette))
+
+gg_All_Rot_Den
+#ggsave(filename = 'AllRotEpiAbun_New.TIFF', plot = gg_All_Rot_Den, width = 10, height = 8, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Rotifer Genera")
+```
+
+
+```{r rotifer genera relative abundance and biomass transformation code, echo = FALSE, warning = FALSE}
+#rotifer genera abun and biomass per month and mutate (transform) the mean values into relative abundances
+Rot_Prop <-
+  Rot_Sum_Stats %>%
+    select(RotGENERA, MONTH, Rot_Bio_MEAN, Rot_Den_MEAN) %>%
+    group_by(MONTH)%>%
+    mutate(Rot_Prop_Bio = (Rot_Bio_MEAN / sum(Rot_Bio_MEAN) * 100), Rot_Prop_Abun = (Rot_Den_MEAN / sum(Rot_Den_MEAN) * 100))
+
+#write_csv(Rot_Prop, file = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/RotPropMonth_New.csv")
+```
+
+## Rotifer genera relative abundance stack graph
+
+```{r rotifer genera relative abundance stack graph, echo = FALSE, warning = FALSE, fig.width = 7, fig.height = 5}
+gg_Rel_Rot_Bio <- ggplot(Rot_Prop, aes(MONTH, Rot_Prop_Bio, fill = RotGENERA)) +
+    geom_bar(color = "black", stat = "identity") + 
+  theme_cowplot() +
+  #panel border, axis text and title sizes and orientations
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14), axis.title.x = element_blank(), axis.text.y = element_text(size = 18), axis.title.y = element_text(size = 20), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(cb_Palette)) +
+  labs(y = "% Biomass") 
+
+gg_Rel_Rot_Bio
+#ggsave(filename = 'RelRotBio_New.TIFF', plot = gg_Rel_Rot_Bio, width = 10, height = 8, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Rotifer Genera")
+
+gg_Rel_Rot_Den <- ggplot(Rot_Prop, aes(MONTH, Rot_Prop_Abun, fill = RotGENERA)) +
+    geom_bar(color = "black", stat = "identity") + 
+  theme_cowplot() +
+  #panel border, axis text and title sizes and orientations
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14), axis.title.x = element_blank(), axis.text.y = element_text(size = 18), axis.title.y = element_text(size = 20), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(cb_Palette)) +
+  labs(y = "% Abundance") 
+
+gg_Rel_Rot_Den
+#ggsave(filename = 'RelRotAbun_New.TIFF', plot = gg_Rel_Rot_Den, width = 7, height = 5, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Rotifer Genera")
+
+Figure2 <- plot_grid(gg_Rot_Den, gg_Rot_Bio, gg_Rel_Rot_Den, gg_Rel_Rot_Bio)
+
+#ggsave(filename = 'Figure2.TIFF', plot = Figure2, width = 10, height = 8, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Rotifer Genera")
+```
+
+#Stratified Tow data tiyding and averaging for each genera per month. 
+
+```{r}
+#creating a stratified tow dataframe
+Strat_Tows <- Zoop_Bio_Den_New %>% select(-c(CollectionDate, Lat, Long, SAMPLENUM, SPECCODE, CollectionDateString)) %>% 
+  #Filter for: strata tows; Rotifers only; 4 stations with stratified tows
+  filter((Strata == "epi"|Strata =="meta"|Strata == "hypo") & (Zoop_GENERA == "Rotifers") & (Station == "stn33"|Station == "stn34"|Station == "stn69"|Station == "stn715"))
+
+## removing Apr and Aug epi only rotifer samples; Late July and Early August samples combined into Month of July; removed epi only Limnos samples
+Month_Strata_Tidy <- Strat_Tows %>% 
+  filter(MONTH != "Apr") %>% 
+  mutate_if(is.factor, as.character) %>% 
+  slice(-(1:12)) %>% 
+  slice(-(342:350)) %>% 
+  slice(-(342:350)) %>% 
+  mutate(Station = as.character(gsub("stn","", Station))) %>% 
+  mutate(MONTH = ifelse(MONTH == "Aug", "July", MONTH))
+
+Month_Strata_SUM <- Month_Strata_Tidy %>% 
+  group_by(MONTH, Strata, RotGENERA) %>% 
+  summarise(Strata_Bio_MEAN = mean(Bio.Liter_New), 
+            Strata_Den_MEAN = mean(Den.Liter_New), 
+            Strata_Bio_SD = sd(Bio.Liter_New), 
+            Strata_Den_SD = sd(Den.Liter_New),
+            N = n(),
+            Strata_SE_Bio = Strata_Bio_SD / sqrt(N), 
+            Strata_SE_Den = Strata_Den_SD / sqrt(N))
+
+Month_Strata_SUM$Strata <- factor(Month_Strata_SUM$Strata , levels = c("epi", "meta", "hypo"))
+
+Month_Strata_SUM$RotGENERA <- factor(Month_Strata_SUM$RotGENERA, levels = c("Trichocerca", "Polyarthra", "Synchaeta", "Ascomorpha", "Conochilus", "Keratella", "Kellicottia", "Ploesoma", "Collotheca", "Gastropus", "Asplanchna"))
+
+Month_Strata_SUM$MONTH <- factor(Month_Strata_SUM$MONTH, levels = c("May", "June", "July", "Sept"))
+
+Month_Strata_Tidy$MONTH <- factor(Month_Strata_Tidy$MONTH, levels = c("May", "June", "July", "Sept"))
+Month_Strata_Tidy$Strata <- factor(Month_Strata_Tidy$Strata, levels = c("epi", "meta", "hypo"))
+
+#write.csv(Month_Strata_SUM, file = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/Month_Strata_SUM_New.csv")
+```
+
+#Set up for Veliger data from 2018 stratified tows
+
+```{r}
+#creating a stratified tow dataframe for veligers
+Veliger_Strat_Tows <- Zoop_Bio_Den_New %>% select(-c(CollectionDate, Lat, Long, SAMPLENUM, SPECCODE, CollectionDateString, RotGENERA)) %>% 
+  #Filter for: strata tows; Rotifers only; 4 stations with stratified tows
+  filter((Strata == "epi"|Strata =="meta"|Strata == "hypo") & (Zoop_GENERA == "Veligers") & (Station == "stn33"|Station == "stn34"|Station == "stn69"|Station == "stn715"))
+
+## removing Apr and Aug epi only rotifer samples; Late July and Early August samples combined into Month of July; removed epi only Limnos samples; removed outlier stn 34 from early fall samples*************************
+Veliger_Month_Strata_Tidy <- Veliger_Strat_Tows %>% 
+  filter(MONTH != "Apr") %>% 
+  mutate_if(is.factor, as.character) %>% 
+  filter(EventID != "stn33_20180814_D_LG") %>% 
+  filter(EventID != "stn34_20180926_N_LG") %>% 
+  mutate(Station = as.character(gsub("stn","", Station))) %>% 
+  mutate(MONTH = ifelse(MONTH == "Aug", "July", MONTH)) %>% 
+  complete(nesting(Station, MONTH, EventID, DN, CountType, SUMGROUP), Strata, fill = list(Bio.Liter_New = 0, Den.Liter_New = 0)) 
+
+
+Veliger_Month_Strata_SUM <- Veliger_Month_Strata_Tidy %>% 
+  group_by(MONTH, Strata) %>% 
+  summarise(Strata_Bio_MEAN = mean(Bio.Liter_New), 
+            Strata_Den_MEAN = mean(Den.Liter_New), 
+            Strata_Bio_SD = sd(Bio.Liter_New), 
+            Strata_Den_SD = sd(Den.Liter_New),
+            N = n(),
+            Strata_SE_Bio = Strata_Bio_SD / sqrt(N), 
+            Strata_SE_Den = Strata_Den_SD / sqrt(N))
+
+Veliger_Month_Strata_SUM$Strata <- factor(Veliger_Month_Strata_SUM$Strata , levels = c("epi", "meta", "hypo"))
+
+#Veliger_Month_Strata_SUM$RotGENERA <- factor(Veliger_Month_Strata_SUM$RotGENERA, levels = c("Trichocerca", "Polyarthra", "Synchaeta", "Ascomorpha", "Conochilus", "Keratella", "Kellicottia", "Ploesoma", "Collotheca", "Gastropus", "Asplanchna"))
+
+Veliger_Month_Strata_SUM$MONTH <- factor(Veliger_Month_Strata_SUM$MONTH, levels = c("May", "June", "July", "Sept"))
+
+Veliger_Month_Strata_Tidy$MONTH <- factor(Veliger_Month_Strata_Tidy$MONTH, levels = c("May", "June", "July", "Sept"))
+Veliger_Month_Strata_Tidy$Strata <- factor(Veliger_Month_Strata_Tidy$Strata, levels = c("epi", "meta", "hypo"))
+
+#write.csv(Month_Strata_SUM, file = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/Month_Strata_SUM_New.csv")
+
+Veliger_Month_Strata <- Veliger_Month_Strata_SUM$MONTH
+Veliger_Length_Strata <- length(Veliger_Month_Strata)
+#Assigning a repetition of character vector for MONTH column
+Veliger_Season_Strata <- rep("NA", Veliger_Length_Strata) 
+
+#'for loop' with 'if else' statements to assign a MONTH index value to the MONTH column depending on DATE value 
+for(x in 1:Veliger_Length_Strata){
+    if (Veliger_Month_Strata[x] == "May") {
+   Veliger_Season_Strata[x] <- "Late Spring"
+   } else if (Veliger_Month_Strata[x] == "June") {
+    Veliger_Season_Strata[x] <- "Early Summer"
+    } else if (Veliger_Month_Strata[x] == "July") {
+     Veliger_Season_Strata[x] <- "Summer"
+     } else if (Veliger_Month_Strata[x] == "Sept") {
+      Veliger_Season_Strata[x] <- "Early Fall" 
+     }
+}
+
+
+Veliger_Month_Strata_SUM <- cbind(Veliger_Month_Strata_SUM, as.factor(Veliger_Season_Strata)) %>% 
+  rename(c("Season" = "...10"))
+```
+
+#Plotting average/SE den and bio for Veliger closing net data
+
+```{r, fig.width = 7, fig.height = 5}
+Veliger_Month_Strata_SUM$Season <- factor(Veliger_Month_Strata_SUM$Season, levels = c("Late Spring", "Early Summer", "Summer", "Early Fall"))
+
+gg_Veliger_Abun_Strata <- ggplot(Veliger_Month_Strata_SUM, aes(Strata, Strata_Den_MEAN, fill = Strata)) +
+  labs(title = "Veliger Abundance", x = "Season", y = ("Abundance #/L")) + 
+  geom_col(position = "dodge2", color = "black") +
+  facet_grid(cols = vars(Season)) +
+  scale_fill_grey(labels = c("Epi", "Meta", "Hypo")) +
+  theme_cowplot() +
+  geom_errorbar(aes(ymax = Strata_Den_MEAN + Strata_SE_Den, ymin = Strata_Den_MEAN - Strata_SE_Den), position = position_dodge(0.9), width = .3) +
+  #theme_classic() +
+#panel border, axis text and title sizes and orientations
+  theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 14), axis.title.y = element_text(size = 18), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "top", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) 
+  
+gg_Veliger_Abun_Strata
+
+#ggsave(filename = 'Veliger_Abun_Strata.TIFF', plot = gg_Veliger_Abun_Strata, width = 7, height = 5, path = "F:/CCM Work Files - Dekstop Version/CSMI Rotifer Analysis/Ontario 2018/CSMI Rotifer Data/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Stratified Tows")
+
+gg_Veliger_Bio_Strata <- ggplot(Veliger_Month_Strata_SUM, aes(Strata, Strata_Bio_MEAN, fill = Strata)) +
+  labs(title = "Veliger Abundance", x = "Season", y = ("Biomass (µg/L)")) + 
+  geom_col(position = "dodge2", color = "black") +
+  facet_grid(cols = vars(Season)) +
+  scale_fill_grey(labels = c("Epi", "Meta", "Hypo")) +
+  theme_cowplot() +
+  geom_errorbar(aes(ymax = Strata_Bio_MEAN + Strata_SE_Bio, ymin = Strata_Bio_MEAN - Strata_SE_Bio), position = position_dodge(0.9), width = .3) +
+  #theme_classic() +
+#panel border, axis text and title sizes and orientations
+  theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 14), axis.title.y = element_text(size = 18), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "top", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) 
+  
+gg_Veliger_Bio_Strata
+
+#ggsave(filename = 'Veliger_Bio_Strata.TIFF', plot = gg_Veliger_Bio_Strata, width = 7, height = 5, path = "F:/CCM Work Files - Dekstop Version/CSMI Rotifer Analysis/Ontario 2018/CSMI Rotifer Data/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Stratified Tows")
+```
+
+#Transformed veliger closing net data
+
+```{r}
+#Work through with Pat Sullivan - make sure to determine month categories correctly - statistical support; adjust for overall Veligers in closing net samples
+Veliger_Month_Strata_Tidy$MONTH <- factor(Veliger_Month_Strata_Tidy$MONTH, levels = c("May", "June", "July", "Sept"))
+Veliger_Month_Strata_Tidy$Strata <- factor(Veliger_Month_Strata_Tidy$Strata, levels = c("epi", "meta", "hypo"))
+
+#summing SQRT Veliger genera values for each strata at a station for each month; assigning unique INDEX values for each stations set of samples (1-23)
+
+SQRT_Transform_Veliger <- Veliger_Month_Strata_Tidy %>% 
+  group_by(MONTH, Strata) %>% 
+    mutate(SqrtBio_Veliger = (sqrt(Bio.Liter_New)),
+            SqrtDen_Veliger = (sqrt(Den.Liter_New)))
+
+SQRT_Month_Veliger_SUM <- SQRT_Transform_Veliger %>% 
+  group_by(MONTH, Strata, EventID) %>%
+  summarise(SQRT_Sum_Bio = sum(SqrtBio_Veliger), 
+            SQRT_Sum_Den = sum(SqrtDen_Veliger))
+
+SQRT_Month_Veliger_Stats <- SQRT_Month_Veliger_SUM %>% 
+  group_by(MONTH, Strata) %>%
+  summarise(SQRT_Mean_Bio = mean(SQRT_Sum_Bio), 
+            SQRT_Mean_Den = mean(SQRT_Sum_Den), 
+            SQRT_SD_Bio = sd(SQRT_Sum_Bio), 
+            SQRT_SD_Den = sd(SQRT_Sum_Den),
+            N = n(),
+            SQRT_SE_Bio = SQRT_SD_Bio / sqrt(N), 
+            SQRT_SE_Den = SQRT_SD_Den / sqrt(N))
+
+SQRT_Veliger_Stn <- SQRT_Month_Veliger_SUM %>% 
+  group_by(EventID, MONTH) %>% 
+  ungroup() %>% 
+  group_by(Strata) %>%
+  mutate(Index = row_number())
+
+#write.csv(SQRT_Month_Stats, file = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/SQRT_Month_Stats.csv")
+
+#DN stratified veliger comparison
+DN_SQRT_Month_Veliger_SUM <- SQRT_Transform_Veliger %>% 
+  group_by(MONTH, Strata, EventID, DN) %>%
+  summarise(SQRT_Sum_Bio = sum(SqrtBio_Veliger), 
+            SQRT_Sum_Den = sum(SqrtDen_Veliger))
+
+DN_SQRT_Month_Veliger_Stats <- DN_SQRT_Month_Veliger_SUM %>% 
+  group_by(MONTH, Strata, DN) %>%
+  summarise(SQRT_Mean_Bio = mean(SQRT_Sum_Bio), 
+            SQRT_Mean_Den = mean(SQRT_Sum_Den), 
+            SQRT_SD_Bio = sd(SQRT_Sum_Bio), 
+            SQRT_SD_Den = sd(SQRT_Sum_Den),
+            N = n(),
+            SQRT_SE_Bio = SQRT_SD_Bio / sqrt(N), 
+            SQRT_SE_Den = SQRT_SD_Den / sqrt(N))
+
+DN_SQRT_Veliger_Stn <- DN_SQRT_Month_Veliger_SUM %>% 
+  group_by(EventID, MONTH) %>% 
+  ungroup() %>% 
+  group_by(Strata) %>%
+  mutate(Index = row_number())
+
+#visualizing stratified density data by month and strata
+Veliger_Strata_Boxplot_edit <- ggplot(SQRT_Veliger_Stn) +
+  geom_boxplot(aes(MONTH, SQRT_Sum_Den)) +
+  facet_grid(rows = vars(Strata))
+Veliger_Strata_Boxplot_edit
+
+#ggsave(filename = 'Veliger_Strata_Boxplot_edit.TIFF', plot = Veliger_Strata_Boxplot_edit, width = 7, height = 5, path = "F:/CCM Work Files - Dekstop Version/CSMI Rotifer Analysis/Ontario 2018/CSMI Rotifer Data/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Stratified Tows")
+
+#outliers, summary, and normality test for Strata_Stn data; 6 outliers identified (4 considered extreme) - 5 from meta/hypo in July & 1 from meta in Sept
+Veliger_Strata_Outliers <- SQRT_Veliger_Stn %>% identify_outliers(SQRT_Sum_Den)
+Veliger_Strata_Summary <- SQRT_Veliger_Stn %>% group_by(Strata, MONTH) %>% 
+  get_summary_stats(SQRT_Sum_Den, type = "mean_se")
+
+#Data is not particularly normal; consider transformation
+Strata_Norm <- SQRT_Veliger_Stn %>% shapiro_test(SQRT_Sum_Den)
+
+SQRT_Veliger_Den_qqplot_edit <- ggqqplot(SQRT_Veliger_Stn, x = "SQRT_Sum_Den", ggtheme = theme_bw()) +
+  facet_grid((Strata~MONTH))
+
+SQRT_Veliger_Den_qqplot_edit
+
+#ggsave(filename = 'SQRT_Veliger_Den_qqplot_edit.TIFF', plot = SQRT_Veliger_Den_qqplot_edit, width = 7, height = 5, path = "F:/CCM Work Files - Dekstop Version/CSMI Rotifer Analysis/Ontario 2018/CSMI Rotifer Data/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Stratified Tows")
+
+SQRT_Veliger_Bio_qqplot_edit <- ggqqplot(SQRT_Veliger_Stn, x = "SQRT_Sum_Bio", ggtheme = theme_bw()) +
+  facet_grid((Strata~MONTH))
+
+SQRT_Veliger_Bio_qqplot_edit
+
+#ggsave(filename = 'SQRT_Veliger_Bio_qqplot_edit.TIFF', plot = SQRT_Veliger_Bio_qqplot_edit, width = 7, height = 5, path = "F:/CCM Work Files - Dekstop Version/CSMI Rotifer Analysis/Ontario 2018/CSMI Rotifer Data/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Stratified Tows")
+
+Strata_Den <- c(tapply(SQRT_Veliger_Stn$SQRT_Sum_Den, list(SQRT_Veliger_Stn$Strata, SQRT_Veliger_Stn$Index), sum))
+hist(Strata_Den)
+
+Strata_Layers <- c(tapply(SQRT_Veliger_Stn$Strata, list(SQRT_Veliger_Stn$Strata, SQRT_Veliger_Stn$Index), unique))
+hist(Strata_Layers)
+
+Strata_Index <- c(tapply(SQRT_Veliger_Stn$Index, list(SQRT_Veliger_Stn$Strata, SQRT_Veliger_Stn$Index), unique))
+hist(Strata_Index)
+
+#Epi = 1; Meta = 2; Hypo = 3
+ggplot(SQRT_Veliger_Stn, aes(Strata, SQRT_Sum_Den, group = MONTH)) + geom_point()
+plot(Strata_Den~Strata_Layers)
+```
+
+#Transformed Veliger density data for strata comparison ANOVA and TukeyHSD
+
+```{r, eval=FALSE}
+May_Filter <- SQRT_Veliger_Stn %>% filter(MONTH == "May")
+
+May_Den <- c(tapply(May_Filter$SQRT_Sum_Den, list(May_Filter$Strata, May_Filter$Index), sum))
+hist(May_Den)
+
+May_Layers <- c(tapply(May_Filter$Strata, list(May_Filter$Strata, May_Filter$Index), unique))
+hist(May_Layers)
+
+May_Index <- c(tapply(May_Filter$Index, list(May_Filter$Strata, May_Filter$Index), unique))
+hist(May_Index)
+May_Index
+
+#linear mixed effect regression - ANOVA test
+May_fit_stn <- lmer(SQRT_Sum_Den ~ Strata + (1|Index), data = May_Filter)
+summary(May_fit_stn)
+ggqqplot(resid(May_fit_stn))
+
+shapiro_test(resid(May_fit_stn))
+moments::skewness(resid(May_fit_stn))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(May_fit_stn, "Strata")
+pairs(emmeans::emmeans(May_fit_stn, "Strata"))
+```
+
+#DN Anova for May Veliger densities
+
+```{r}
+DN_May_Filter <- DN_SQRT_Veliger_Stn %>% filter(MONTH == "May" & Strata == "hypo") 
+
+DN_May_Filter$DN <- as.factor(DN_May_Filter$DN)    
+
+DN_May_Den <- c(tapply(DN_May_Filter$SQRT_Sum_Den, list(DN_May_Filter$Strata, DN_May_Filter$Index), sum))
+hist(DN_May_Den)
+
+#linear regression - one-way ANOVA test (0.05 level of sig)
+
+DN_May_fit_stn <- lm(SQRT_Sum_Den ~ DN, data = DN_May_Filter)
+summary(DN_May_fit_stn)
+ggqqplot(resid(DN_May_fit_stn))
+
+shapiro_test(resid(DN_May_fit_stn))
+moments::skewness(resid(DN_May_fit_stn))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(DN_May_fit_stn, "DN")
+pairs(emmeans::emmeans(DN_May_fit_stn, "DN"))
+
+Anova(DN_May_fit_stn)
+```
+
+#SQRT transformed May veliger density data for strata comparison ANOVA and TukeyHSD
+
+```{r}
+May_Filter_SQRT <- SQRT_Veliger_Stn %>% filter(MONTH == "May")
+
+#linear mixed effect regression - ANOVA test
+May_fit_stn_sqrt <- lmer(SQRT_Sum_Den ~ Strata + (1|Index), data = May_Filter_SQRT)
+summary(May_fit_stn_sqrt)
+ggqqplot(resid(May_fit_stn_sqrt))
+
+shapiro_test(resid(May_fit_stn_sqrt))
+moments::skewness(resid(May_fit_stn_sqrt))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(May_fit_stn_sqrt, "Strata")
+May_Tukey <- pairs(emmeans::emmeans(May_fit_stn_sqrt, "Strata"))
+May_Tukey
+```
+
+#SQRT transformed June veliger density data for strata comparison ANOVA and TukeyHSD
+
+```{r}
+June_Filter_SQRT <- SQRT_Veliger_Stn %>% filter(MONTH == "June")
+
+#linear mixed effect regression - ANOVA test
+June_fit_stn_sqrt <- lmer(SQRT_Sum_Den ~ Strata + (1|Index), data = June_Filter_SQRT)
+summary(June_fit_stn_sqrt)
+ggqqplot(resid(June_fit_stn_sqrt))
+
+shapiro_test(resid(June_fit_stn_sqrt))
+moments::skewness(resid(June_fit_stn_sqrt))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(June_fit_stn_sqrt, "Strata")
+June_Tukey <- pairs(emmeans::emmeans(June_fit_stn_sqrt, "Strata"))
+June_Tukey
+```
+
+#DN Anova for June Veliger densities
+
+```{r}
+DN_June_Filter <- DN_SQRT_Veliger_Stn %>% filter(MONTH == "June" & Strata == "hypo") 
+
+DN_June_Filter$DN <- as.factor(DN_June_Filter$DN)    
+
+DN_June_Den <- c(tapply(DN_June_Filter$SQRT_Sum_Den, list(DN_June_Filter$Strata, DN_June_Filter$Index), sum))
+hist(DN_May_Den)
+
+#linear regression - one-way ANOVA test (0.05 level of sig)
+
+DN_June_fit_stn <- lm(SQRT_Sum_Den ~ DN, data = DN_June_Filter)
+summary(DN_June_fit_stn)
+ggqqplot(resid(DN_June_fit_stn))
+
+shapiro_test(resid(DN_June_fit_stn))
+moments::skewness(resid(DN_June_fit_stn))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(DN_June_fit_stn, "DN")
+pairs(emmeans::emmeans(DN_June_fit_stn, "DN"))
+
+Anova(DN_June_fit_stn)
+```
+
+#SQRT transformed July veliger density data for strata comparison ANOVA and TukeyHSD
+
+```{r}
+July_Filter_SQRT <- SQRT_Veliger_Stn %>% filter(MONTH == "July")
+
+#linear mixed effect regression - ANOVA test
+July_fit_stn_sqrt <- lmer(SQRT_Sum_Den ~ Strata + (1|Index), data = July_Filter_SQRT)
+summary(July_fit_stn_sqrt)
+ggqqplot(resid(July_fit_stn_sqrt))
+
+shapiro_test(resid(July_fit_stn_sqrt))
+moments::skewness(resid(July_fit_stn_sqrt))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(July_fit_stn_sqrt, "Strata")
+July_Tukey <- pairs(emmeans::emmeans(July_fit_stn_sqrt, "Strata"))
+July_Tukey
+```
+
+#DN Anova for July Veliger densities
+
+```{r}
+DN_July_Filter <- DN_SQRT_Veliger_Stn %>% filter(MONTH == "July" & Strata == "hypo") 
+
+DN_July_Filter$DN <- as.factor(DN_July_Filter$DN)    
+
+DN_July_Den <- c(tapply(DN_July_Filter$SQRT_Sum_Den, list(DN_July_Filter$Strata, DN_July_Filter$Index), sum))
+hist(DN_July_Den)
+
+#linear regression - one-way ANOVA test (0.05 level of sig)
+
+DN_July_fit_stn <- lm(SQRT_Sum_Den ~ DN, data = DN_July_Filter)
+summary(DN_July_fit_stn)
+ggqqplot(resid(DN_July_fit_stn))
+
+shapiro_test(resid(DN_July_fit_stn))
+moments::skewness(resid(DN_July_fit_stn))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(DN_July_fit_stn, "DN")
+pairs(emmeans::emmeans(DN_July_fit_stn, "DN"))
+
+Anova(DN_July_fit_stn)
+```
+
+#SQRT transformed Sept veliger density data for strata comparison ANOVA and TukeyHSD
+
+```{r}
+#Outlier stn 34 meta not removed
+Sept_Filter_SQRT <- SQRT_Veliger_Stn %>% filter(MONTH == "Sept")
+
+#Outlier stn 34 meta removed
+Sept_Filter_SQRT_edit <- Sept_Filter_SQRT %>% filter(EventID != "stn34_20180926_N_LG")
+
+#linear mixed effect regression - ANOVA test
+Sept_fit_stn_sqrt <- lmer(SQRT_Sum_Den ~ Strata + (1|Index), data = Sept_Filter_SQRT_edit)
+summary(Sept_fit_stn_sqrt)
+ggqqplot(resid(Sept_fit_stn_sqrt))
+
+shapiro_test(resid(Sept_fit_stn_sqrt))
+moments::skewness(resid(Sept_fit_stn_sqrt))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(Sept_fit_stn_sqrt, "Strata")
+Sept_Tukey <- pairs(emmeans::emmeans(Sept_fit_stn_sqrt, "Strata"))
+Sept_Tukey
+```
+
+#DN Anova for Sept Veliger densities
+
+```{r}
+DN_Sept_Filter <- DN_SQRT_Veliger_Stn %>% filter(MONTH == "Sept" & Strata == "epi") %>% filter(EventID != "stn34_20180926_N_LG")
+
+DN_Sept_Filter$DN <- as.factor(DN_Sept_Filter$DN)    
+
+DN_Sept_Den <- c(tapply(DN_Sept_Filter$SQRT_Sum_Den, list(DN_Sept_Filter$Strata, DN_Sept_Filter$Index), sum))
+hist(DN_Sept_Den)
+
+#linear regression - one-way ANOVA test (0.05 level of sig)
+
+DN_Sept_fit_stn <- lm(SQRT_Sum_Den ~ DN, data = DN_Sept_Filter)
+summary(DN_Sept_fit_stn)
+ggqqplot(resid(DN_Sept_fit_stn))
+
+shapiro_test(resid(DN_Sept_fit_stn))
+moments::skewness(resid(DN_Sept_fit_stn))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(DN_Sept_fit_stn, "DN")
+pairs(emmeans::emmeans(DN_Sept_fit_stn, "DN"))
+
+Anova(DN_Sept_fit_stn)
+```
+
+
+```{r, fig.width = 7, fig.height = 5}
+#Fig_2_Arrange <- ggarrange(gg_Abun_Strata, gg_Strata_Den_Prop, 
+ #         labels = c("A", "B"),
+  #        ncol = 2, nrow = 1,
+   #       font.label = list(size = 14, face = "bold"),
+    #      align = "hv")
+  
+#ggsave(filename = 'Strata_All_Den_New.TIFF', plot = gg_Abun_Strata, width = 7, height = 5, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Stratified Tows")
+
+#gg_Strata_All_Den_Dodge <- ggplot(Strata_All, aes(Strata, Strata_All_Abun, fill = Strata)) +
+ # labs(title = "Rotifer Abundance", x = "Month", y = "Abundance (#/L)") + 
+  #geom_col(position = "dodge2", color = "black") +
+  #facet_grid(cols = vars(MONTH)) +
+  #scale_fill_grey() +
+  #theme_cowplot() +
+  #geom_errorbar(aes(ymax = Strata_All_Abun + Strata_All_Abun_SE, ymin = Strata_All_Abun - Strata_All_Abun_SE), position = position_dodge(0.9), width = .3) +
+#panel border, axis text and title sizes and orientations
+  #theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 14), axis.title.y = element_text(size = 18), plot.title = element_blank()) +
+#legend details 
+  #theme(legend.title = element_blank(), legend.position = "top", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14))
+  
+#gg_Strata_All_Den_Dodge
+#significant differences; letters indicate significant differences in rotifer densities among strata within each month. 
+
+library(EnvStats)
+
+gg_SQRT_Abun_Strata <- ggplot(SQRT_Month_Stats, aes(Strata, SQRT_Mean_Den, fill = Strata)) +
+  labs(title = "Rotifer Abundance", x = "Month", y = expression(sqrt("Abundance #/L"))) + 
+  geom_col(position = "dodge2", color = "black") +
+  facet_grid(cols = vars(MONTH)) +
+  scale_fill_grey(labels = c("Epi", "Meta", "Hypo")) +
+  theme_cowplot() +
+  geom_errorbar(aes(ymax = SQRT_Mean_Den + SQRT_SE_Den, ymin = SQRT_Mean_Den - SQRT_SE_Den), position = position_dodge(0.9), width = .3) +
+  #theme_classic() +
+#panel border, axis text and title sizes and orientations
+  theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 14), axis.title.y = element_text(size = 18), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "top", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) 
+  
+gg_SQRT_Abun_Strata
+#ggsave(filename = 'SQRT_Abun_Strata.Tiff', plot = gg_SQRT_Abun_Strata, width = 10, height = 8, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Stratified Tows")
+
+gg_DN_Abun_Strata <- ggplot(DN_Strata_Stats, aes(Strata, All_Strata_Den_MEAN, fill = Strata)) +
+  labs(title = "Rotifer Abundance", x = "Month", y = ("Abundance #/L")) + 
+  geom_col(position = "dodge2", color = "black") +
+  #facet_grid(cols = vars(MONTH)) +
+  facet_wrap(vars(DN), nrow = 2) +
+  scale_fill_grey(labels = c("Epi", "Meta", "Hypo")) +
+  theme_cowplot() +
+  #geom_errorbar(aes(ymax = All_Strata_Den_MEAN + All_Strata_SE_Den, ymin = All_Strata_Den_MEAN - All_Strata_SE_Den), position = position_dodge(0.9), width = .3) +
+  #theme_classic() +
+#panel border, axis text and title sizes and orientations
+  theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 14), axis.title.y = element_text(size = 18), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "top", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) 
+  
+gg_DN_Abun_Strata
+```
+
+
+```{r}
+#Summary stats for total rotifers from closing net tows (untransformed values); plot data for new figure 2
+Rot_Strata_All_SUM <- Month_Strata_Tidy %>%
+  group_by(MONTH, Strata, EventID) %>% 
+  summarise(Rot_Strata_Bio_All = sum(Bio.Liter_New), Rot_Strata_Den_All = sum(Den.Liter_New)) %>% 
+  ungroup %>% 
+  complete(nesting(MONTH, EventID), fill = list(Rot_Strata_Bio_All = 0, Rot_Strata_Den_All = 0))
+
+Rot_Strata_All_Stats <- Rot_Strata_All_SUM %>%
+  group_by(MONTH, Strata) %>%
+  summarise(All_Strata_Bio_SUM = sum(Rot_Strata_Bio_All), 
+            All_Strata_Den_SUM = sum(Rot_Strata_Den_All),
+            All_Strata_Bio_MEAN = mean(Rot_Strata_Bio_All), 
+            All_Strata_Den_MEAN = mean(Rot_Strata_Den_All), 
+            All_Strata_Bio_SD = sd(Rot_Strata_Bio_All), 
+            All_Strata_Den_SD = sd(Rot_Strata_Den_All),
+            N = n(),
+            All_Strata_SE_Bio = All_Strata_Bio_SD / sqrt(N), 
+            All_Strata_SE_Den = All_Strata_Den_SD / sqrt(N))
+
+#write.csv(Rot_Strata_All_Stats, file = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/Rot_Strata_All_Stats.csv")
+
+#Month_Strata_Areal <- Month_Strata_Tidy %>% 
+ # group_by(MONTH, Strata, EventID) %>% 
+  #summarise(Areal_Strata_Bio_SUM = sum(`Aereal Biomass m2`), 
+   #         Areal_Strata_Den_SUM = sum(`Aereal Density m2`)) %>% 
+    #        ungroup %>% 
+     #       group_by(MONTH, Strata) %>% 
+      #      summarise(Areal_Strata_Bio_MEAN = mean(Areal_Strata_Bio_SUM), 
+       #     Areal_Strata_Den_MEAN = mean(Areal_Strata_Den_SUM), 
+        #    Areal_Strata_Bio_SD = sd(Areal_Strata_Bio_SUM), 
+         #   Areal_Strata_Den_SD = sd(Areal_Strata_Den_SUM),
+          #  N = n(),
+           # Areal_Strata_SE_Bio = Areal_Strata_Bio_SD / sqrt(N), 
+            #Areal_Strata_SE_Den = Areal_Strata_Den_SD / sqrt(N))
+
+#write.csv(Month_Strata_Areal, file = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/Month_Strata_Areal.csv")
+
+DN_Strata_SUM <- Month_Strata_Tidy %>%
+  group_by(MONTH, Strata, EventID, DN) %>% 
+  summarise(Rot_Strata_Bio_All = sum(Bio.Liter_New), Rot_Strata_Den_All = sum(Den.Liter_New)) %>% 
+  ungroup %>% 
+  complete(nesting(MONTH, EventID), fill = list(Rot_Strata_Bio_All = 0, Rot_Strata_Den_All = 0))
+
+DN_Strata_Stats <- DN_Strata_SUM %>%
+  group_by(MONTH, Strata, DN) %>%
+  summarise(All_Strata_Bio_SUM = sum(Rot_Strata_Bio_All), 
+            All_Strata_Den_SUM = sum(Rot_Strata_Den_All),
+            All_Strata_Bio_MEAN = mean(Rot_Strata_Bio_All), 
+            All_Strata_Den_MEAN = mean(Rot_Strata_Den_All), 
+            All_Strata_Bio_SD = sd(Rot_Strata_Bio_All), 
+            All_Strata_Den_SD = sd(Rot_Strata_Den_All),
+            N = n(),
+            All_Strata_SE_Bio = All_Strata_Bio_SD / sqrt(N), 
+            All_Strata_SE_Den = All_Strata_Den_SD / sqrt(N))
+```
+
+# Stratified tows data plotting
+
+```{r, fig.width = 7, fig.height = 5}
+strata_cb_Palette <- c("green2", "yellow2", "red2", "navy", "saddlebrown", "magenta3", "cyan3", "orange3", "mediumaquamarine", "seagreen4", "gray60")
+
+gg_Strata_Den <- ggplot(Month_Strata_SUM, aes(MONTH, Strata_Den_MEAN, fill = RotGENERA)) +
+  labs(title = "Rotifer Abundance", x = "Month", y = "Abundance (#/L)", color = "Genera") + 
+  geom_col(color = "black") +
+  facet_grid(rows = vars(Strata), scales = "free_y") + 
+  theme_cowplot() +
+  geom_errorbar(aes(ymax = Strata_Den_MEAN + Strata_SE_Den, ymin = Strata_Den_MEAN - Strata_SE_Den), position = "identity", width = .25) +
+  #theme_classic() +
+#panel border, axis text and title sizes and orientations
+  theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14), axis.title.x = element_text(size = 18), axis.text.y = element_text(size = 14), axis.title.y = element_text(size = 18), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "top", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(strata_cb_Palette))
+
+gg_Strata_Den
+#ggsave(filename = 'Strata_Density_Orig_New.TIFF', plot = gg_Strata_Den, width = 7, height = 5, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Stratified Tows")
+
+gg_Strata_Bio <- ggplot(Month_Strata_SUM, aes(MONTH, Strata_Bio_MEAN, fill = RotGENERA)) +
+  labs(title = "Rotifer Biomass", x = "Month", y = "Biomass (µg/L)", color = "Genera") + 
+  geom_col(color = "black") +
+  facet_grid(rows = vars(Strata), scales = "free_y") + 
+  theme_cowplot() +
+#panel border, axis text and title sizes and orientations
+  theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14), axis.title.x = element_text(size = 18), axis.text.y = element_text(size = 14), axis.title.y = element_text(size = 18), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "top", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(strata_cb_Palette))
+
+gg_Strata_Bio
+
+#ggsave(filename = 'Strata_Biomass_Orig_New.TIFF', plot = gg_Strata_Bio, width = 7, height = 5, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Stratified Tows")
+```
+
+
+```{r}
+#Stratified tows relative proportions for rot genera
+Strata_Prop <-
+  Month_Strata_SUM %>%
+    select(RotGENERA, MONTH, Strata, Strata_Bio_MEAN, Strata_Den_MEAN) %>%
+    group_by(MONTH, Strata)%>%
+    mutate(Strata_Prop_Bio = (Strata_Bio_MEAN / sum(Strata_Bio_MEAN) * 100), Strata_Prop_Abun = (Strata_Den_MEAN / sum(Strata_Den_MEAN) * 100))
+
+#write.csv(Strata_Prop, file = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/Strata_Prop_New.csv")
+
+Strata_Seasonal_Prop <- Strata_Prop$MONTH
+Length_Prop_Strata <- length(Strata_Seasonal_Prop)
+#Assigning a repetition of character vector for MONTH column
+Season_Strata_Prop <- rep("NA", Length_Prop_Strata) 
+
+#'for loop' with 'if else' statements to assign a MONTH index value to the MONTH column depending on DATE value 
+for(x in 1:Length_Prop_Strata){
+    if (Strata_Seasonal_Prop[x] == "May") {
+   Season_Strata_Prop[x] <- "Late Spring"
+   } else if (Strata_Seasonal_Prop[x] == "June") {
+    Season_Strata_Prop[x] <- "Early Summer"
+    } else if (Strata_Seasonal_Prop[x] == "July") {
+     Season_Strata_Prop[x] <- "Summer"
+     } else if (Strata_Seasonal_Prop[x] == "Sept") {
+      Season_Strata_Prop[x] <- "Early Fall" 
+     }
+}
+
+
+Strata_Prop <- cbind(Strata_Prop, as.factor(Season_Strata_Prop)) %>% 
+  rename(c("Season" = "...8"))
+```
+
+
+```{r fig.width = 7, fig.height = 5}
+#Stratified tows relative proportions for rot genera plotting
+
+Strata_Labels <- c("Epi", "Meta", "Hypo")
+
+Strata_Prop$Season <- factor(Strata_Prop$Season, levels = c("Late Spring", "Early Summer", "Summer", "Early Fall"))
+
+gg_Strata_Den_Prop <- ggplot(Strata_Prop, aes(Strata, Strata_Prop_Abun, fill = RotGENERA)) +
+  labs(title = "Rotifer Abundance", x = "Month", y = "% Abundance", color = "Genera") + 
+  geom_col(color = "black") +
+  facet_grid(cols = vars(Season)) +  
+  theme_cowplot() +
+  #theme_classic() +
+#panel border, axis text and title sizes and orientations
+  theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14), axis.title.x = element_blank(), axis.text.y = element_text(size = 14), axis.title.y = element_text(size = 18), plot.title = element_blank()) +
+  scale_x_discrete(labels= Strata_Labels) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "top",  legend.justification='center', legend.box.background = element_rect(), legend.box.margin = margin(2,2,2,2), legend.text = element_text(size = 12)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(strata_cb_Palette))
+
+gg_Strata_Den_Prop
+#ggsave(filename = 'Strata_Den_Prop_New.TIFF', plot = gg_Strata_Den_Prop, width = 10, height = 8, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Stratified Tows")
+
+gg_Strata_Bio_Prop <- ggplot(Strata_Prop, aes(Strata, Strata_Prop_Bio, fill = RotGENERA)) +
+  labs(title = "Rotifer Biomass", x = "Month", y = "% Biomass", color = "Genera") + 
+  geom_col(color = "black") +
+  facet_grid(cols = vars(Season)) +  
+  theme_cowplot() +
+  #theme_classic() +
+#panel border, axis text and title sizes and orientations
+  theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 14), axis.title.y = element_text(size = 18), plot.title = element_blank()) +
+  scale_x_discrete(labels= Strata_Labels) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "top", legend.justification='center', legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(strata_cb_Palette))
+
+gg_Strata_Bio_Prop
+
+#ggsave(filename = 'Strata_Bio_Prop.TIFF', plot = gg_Strata_Bio_Prop, width = 10, height = 8, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Stratified Tows")
+```
+
+
+```{r}
+#Work through with Pat Sullivan - make sure to determine month categories correctly - statistical support; adjust for overall rotifers in closing net samples
+Month_Strata_Tidy$MONTH <- factor(Month_Strata_Tidy$MONTH, levels = c("May", "June", "July", "Sept"))
+Month_Strata_Tidy$Strata <- factor(Month_Strata_Tidy$Strata, levels = c("epi", "meta", "hypo"))
+
+#summing SQRT rotifer genera values for each strata at a station for each month; assigning unique INDEX values for each stations set of samples (1-23)
+
+SQRT_Transform_Rot <- Month_Strata_Tidy %>% 
+  group_by(MONTH, Strata, RotGENERA) %>% 
+    mutate(SqrtBio_Rot = (sqrt(Bio.Liter_New)),
+            SqrtDen_Rot = (sqrt(Den.Liter_New)))
+
+SQRT_Month_SUM <- SQRT_Transform_Rot %>% 
+  group_by(MONTH, Strata, EventID) %>%
+  summarise(SQRT_Sum_Bio = sum(SqrtBio_Rot), 
+            SQRT_Sum_Den = sum(SqrtDen_Rot))
+
+SQRT_Month_Stats <- SQRT_Month_SUM %>% 
+  group_by(MONTH, Strata) %>%
+  summarise(SQRT_Mean_Bio = mean(SQRT_Sum_Bio), 
+            SQRT_Mean_Den = mean(SQRT_Sum_Den), 
+            SQRT_SD_Bio = sd(SQRT_Sum_Bio), 
+            SQRT_SD_Den = sd(SQRT_Sum_Den),
+            N = n(),
+            SQRT_SE_Bio = SQRT_SD_Bio / sqrt(N), 
+            SQRT_SE_Den = SQRT_SD_Den / sqrt(N))
+
+SQRT_Rot_Stn <- SQRT_Month_SUM %>% 
+  group_by(EventID, MONTH) %>% 
+  ungroup() %>% 
+  group_by(Strata) %>%
+  mutate(Index = row_number())
+
+#write.csv(SQRT_Month_Stats, file = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/SQRT_Month_Stats.csv")
+
+#DN stratified rotifer comparison
+DN_SQRT_Month_SUM <- SQRT_Transform_Rot %>% 
+  group_by(MONTH, Strata, EventID, DN) %>%
+  summarise(SQRT_Sum_Bio = sum(SqrtBio_Rot), 
+            SQRT_Sum_Den = sum(SqrtDen_Rot))
+
+DN_SQRT_Month_Stats <- DN_SQRT_Month_SUM %>% 
+  group_by(MONTH, Strata, DN) %>%
+  summarise(SQRT_Mean_Bio = mean(SQRT_Sum_Bio), 
+            SQRT_Mean_Den = mean(SQRT_Sum_Den), 
+            SQRT_SD_Bio = sd(SQRT_Sum_Bio), 
+            SQRT_SD_Den = sd(SQRT_Sum_Den),
+            N = n(),
+            SQRT_SE_Bio = SQRT_SD_Bio / sqrt(N), 
+            SQRT_SE_Den = SQRT_SD_Den / sqrt(N))
+
+DN_SQRT_Rot_Stn <- DN_SQRT_Month_SUM %>% 
+  group_by(EventID, MONTH) %>% 
+  ungroup() %>% 
+  group_by(Strata) %>%
+  mutate(Index = row_number())
+
+#visualizing stratified density data by month and strata
+Strata_Boxplot <- ggplot(SQRT_Rot_Stn) +
+  geom_boxplot(aes(MONTH, SQRT_Sum_Den)) +
+  facet_grid(rows = vars(Strata))
+
+#outliers, summary, and normality test for Strata_Stn data; 10 outliers identified (6 considered extreme) - all from meta/hypo in July/Sept
+Strata_Outliers <- SQRT_Rot_Stn %>% identify_outliers(SQRT_Sum_Den)
+Strata_Summary <- SQRT_Rot_Stn %>% group_by(Strata, MONTH) %>% 
+  get_summary_stats(SQRT_Sum_Den, type = "mean_se")
+
+#Data is not particularly normal; consider transformation
+Strata_Norm <- SQRT_Rot_Stn %>% shapiro_test(SQRT_Sum_Den)
+
+ggqqplot(SQRT_Rot_Stn, x = "SQRT_Sum_Den", ggtheme = theme_bw()) +
+  facet_grid((Strata~MONTH))
+
+Strata_Den <- c(tapply(SQRT_Rot_Stn$SQRT_Sum_Den, list(SQRT_Rot_Stn$Strata, SQRT_Rot_Stn$Index), sum))
+hist(Strata_Den)
+
+Strata_Layers <- c(tapply(SQRT_Rot_Stn$Strata, list(SQRT_Rot_Stn$Strata, SQRT_Rot_Stn$Index), unique))
+hist(Strata_Layers)
+
+Strata_Index <- c(tapply(SQRT_Rot_Stn$Index, list(SQRT_Rot_Stn$Strata, SQRT_Rot_Stn$Index), unique))
+hist(Strata_Index)
+
+#Epi = 1; Meta = 2; Hypo = 3
+ggplot(SQRT_Rot_Stn, aes(Strata, SQRT_Sum_Den, group = MONTH)) + geom_point()
+plot(Strata_Den~Strata_Layers)
+```
+
+#Transformed rotifer density data for strata comparison ANOVA and TukeyHSD
+
+```{r, eval=FALSE}
+May_Filter <- SQRT_Rot_Stn %>% filter(MONTH == "May")
+
+May_Den <- c(tapply(May_Filter$SQRT_Sum_Den, list(May_Filter$Strata, May_Filter$Index), sum))
+hist(May_Den)
+
+May_Layers <- c(tapply(May_Filter$Strata, list(May_Filter$Strata, May_Filter$Index), unique))
+hist(May_Layers)
+
+May_Index <- c(tapply(May_Filter$Index, list(May_Filter$Strata, May_Filter$Index), unique))
+hist(May_Index)
+May_Index
+
+#linear mixed effect regression - ANOVA test
+May_fit_stn <- lmer(SQRT_Sum_Den ~ Strata + (1|Index), data = May_Filter)
+summary(May_fit_stn)
+ggqqplot(resid(May_fit_stn))
+
+shapiro_test(resid(May_fit_stn))
+moments::skewness(resid(May_fit_stn))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(May_fit_stn, "Strata")
+pairs(emmeans::emmeans(May_fit_stn, "Strata"))
+```
+
+
+```{r}
+DN_May_Filter <- DN_SQRT_Rot_Stn %>% filter(MONTH == "May" & Strata == "Hypo") 
+
+DN_May_Filter$DN <- as.factor(DN_May_Filter$DN)    
+
+DN_May_Den <- c(tapply(DN_May_Filter$SQRT_Sum_Den, list(DN_May_Filter$Strata, DN_May_Filter$Index), sum))
+hist(DN_May_Den)
+
+#linear regression - one-way ANOVA test (0.05 level of sig)
+
+DN_May_fit_stn <- lm(SQRT_Sum_Den ~ DN, data = DN_May_Filter)
+summary(DN_May_fit_stn)
+ggqqplot(resid(DN_May_fit_stn))
+
+shapiro_test(resid(DN_May_fit_stn))
+moments::skewness(resid(DN_May_fit_stn))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(DN_May_fit_stn, "DN")
+pairs(emmeans::emmeans(DN_May_fit_stn, "DN"))
+
+Anova(DN_May_fit_stn)
+```
+
+#SQRT transformed May rotifer density data for strata comparison ANOVA and TukeyHSD
+
+```{r}
+May_Filter_SQRT <- SQRT_Rot_Stn %>% filter(MONTH == "May")
+
+#linear mixed effect regression - ANOVA test
+May_fit_stn_sqrt <- lmer(SQRT_Sum_Den ~ Strata + (1|Index), data = May_Filter_SQRT)
+summary(May_fit_stn_sqrt)
+ggqqplot(resid(May_fit_stn_sqrt))
+
+shapiro_test(resid(May_fit_stn_sqrt))
+moments::skewness(resid(May_fit_stn_sqrt))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(May_fit_stn_sqrt, "Strata")
+May_Tukey <- pairs(emmeans::emmeans(May_fit_stn_sqrt, "Strata"))
+May_Tukey
+```
+
+#SQRT transformed June rotifer density data for strata comparison ANOVA and TukeyHSD
+
+```{r}
+June_Filter_SQRT <- SQRT_Rot_Stn %>% filter(MONTH == "June")
+
+#linear mixed effect regression - ANOVA test
+June_fit_stn_sqrt <- lmer(SQRT_Sum_Den ~ Strata + (1|Index), data = June_Filter_SQRT)
+summary(June_fit_stn_sqrt)
+ggqqplot(resid(June_fit_stn_sqrt))
+
+shapiro_test(resid(June_fit_stn_sqrt))
+moments::skewness(resid(June_fit_stn_sqrt))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(June_fit_stn_sqrt, "Strata")
+June_Tukey <- pairs(emmeans::emmeans(June_fit_stn_sqrt, "Strata"))
+June_Tukey
+```
+
+
+```{r}
+DN_June_Filter <- DN_SQRT_Rot_Stn %>% filter(MONTH == "June" & Strata == "hypo") 
+
+DN_June_Filter$DN <- as.factor(DN_June_Filter$DN)    
+
+DN_June_Den <- c(tapply(DN_June_Filter$SQRT_Sum_Den, list(DN_June_Filter$Strata, DN_June_Filter$Index), sum))
+hist(DN_May_Den)
+
+#linear regression - one-way ANOVA test (0.05 level of sig)
+
+DN_June_fit_stn <- lm(SQRT_Sum_Den ~ DN, data = DN_June_Filter)
+summary(DN_June_fit_stn)
+ggqqplot(resid(DN_June_fit_stn))
+
+shapiro_test(resid(DN_June_fit_stn))
+moments::skewness(resid(DN_June_fit_stn))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(DN_June_fit_stn, "DN")
+pairs(emmeans::emmeans(DN_June_fit_stn, "DN"))
+
+Anova(DN_June_fit_stn)
+```
+
+#SQRT transformed July rotifer density data for strata comparison ANOVA and TukeyHSD
+
+```{r}
+July_Filter_SQRT <- SQRT_Rot_Stn %>% filter(MONTH == "July")
+
+#linear mixed effect regression - ANOVA test
+July_fit_stn_sqrt <- lmer(SQRT_Sum_Den ~ Strata + (1|Index), data = July_Filter_SQRT)
+summary(July_fit_stn_sqrt)
+ggqqplot(resid(July_fit_stn_sqrt))
+
+shapiro_test(resid(July_fit_stn_sqrt))
+moments::skewness(resid(July_fit_stn_sqrt))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(July_fit_stn_sqrt, "Strata")
+July_Tukey <- pairs(emmeans::emmeans(July_fit_stn_sqrt, "Strata"))
+July_Tukey
+```
+
+
+```{r}
+DN_July_Filter <- DN_SQRT_Rot_Stn %>% filter(MONTH == "July" & Strata == "hypo") 
+
+DN_July_Filter$DN <- as.factor(DN_July_Filter$DN)    
+
+DN_July_Den <- c(tapply(DN_July_Filter$SQRT_Sum_Den, list(DN_July_Filter$Strata, DN_July_Filter$Index), sum))
+hist(DN_July_Den)
+
+#linear regression - one-way ANOVA test (0.05 level of sig)
+
+DN_July_fit_stn <- lm(SQRT_Sum_Den ~ DN, data = DN_July_Filter)
+summary(DN_July_fit_stn)
+ggqqplot(resid(DN_July_fit_stn))
+
+shapiro_test(resid(DN_July_fit_stn))
+moments::skewness(resid(DN_July_fit_stn))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(DN_July_fit_stn, "DN")
+pairs(emmeans::emmeans(DN_July_fit_stn, "DN"))
+
+Anova(DN_July_fit_stn)
+```
+
+#SQRT transformed Sept rotifer density data for strata comparison ANOVA and TukeyHSD
+
+```{r}
+Sept_Filter_SQRT <- SQRT_Rot_Stn %>% filter(MONTH == "Sept")
+
+#linear mixed effect regression - ANOVA test
+Sept_fit_stn_sqrt <- lmer(SQRT_Sum_Den ~ Strata + (1|Index), data = Sept_Filter_SQRT)
+summary(Sept_fit_stn_sqrt)
+ggqqplot(resid(Sept_fit_stn_sqrt))
+
+shapiro_test(resid(Sept_fit_stn_sqrt))
+moments::skewness(resid(Sept_fit_stn_sqrt))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(Sept_fit_stn_sqrt, "Strata")
+Sept_Tukey <- pairs(emmeans::emmeans(Sept_fit_stn_sqrt, "Strata"))
+```
+
+
+```{r}
+DN_Sept_Filter <- DN_SQRT_Rot_Stn %>% filter(MONTH == "Sept" & Strata == "epi") 
+
+DN_Sept_Filter$DN <- as.factor(DN_Sept_Filter$DN)    
+
+DN_Sept_Den <- c(tapply(DN_Sept_Filter$SQRT_Sum_Den, list(DN_Sept_Filter$Strata, DN_Sept_Filter$Index), sum))
+hist(DN_Sept_Den)
+
+#linear regression - one-way ANOVA test (0.05 level of sig)
+
+DN_Sept_fit_stn <- lm(SQRT_Sum_Den ~ DN, data = DN_Sept_Filter)
+summary(DN_Sept_fit_stn)
+ggqqplot(resid(DN_Sept_fit_stn))
+
+shapiro_test(resid(DN_Sept_fit_stn))
+moments::skewness(resid(DN_Sept_fit_stn))
+
+#TukeyHSD post-hoc test
+emmeans::emmeans(DN_Sept_fit_stn, "DN")
+pairs(emmeans::emmeans(DN_Sept_fit_stn, "DN"))
+
+Anova(DN_Sept_fit_stn)
+```
+
+
+```{r}
+#CSMI vs. GLNPO rotifer comparisons; Seasonal distinctions instead of monthly
+#Rotifer_All_Tidy <-  readxl::read_xlsx("C:/Users/cmars/OneDrive/Desktop/Rotifer Summary Info_CCM_current.xlsx", sheet = "All Rotifer Data Tidy")
+
+#Rotifer_All_Tidy_Long <- pivot_longer(Rotifer_All_Tidy, cols = 18:29, names_to = "Genera", values_to = "Density") %>% select(!(9:17))
+
+#Rotifer data with 9 duplicate samples removed; 4 from late spring, 3 from early summer, 2 from summer
+
+Rotifer_All_Tidy <- read.csv("C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/Taxa_Sum_New_Seasonal.csv")
+
+Rotifer_All_Tidy_Parsed <- Rotifer_All_Tidy %>% mutate(Date = mdy(Date))
+```
+
+
+```{r}
+Seasonal_Stats <- Rotifer_All_Tidy_Parsed %>% 
+  group_by(RotGENERA, Season) %>%
+  summarise(Bio_SUM = sum(Taxa_Bio_Sum), 
+            Den_SUM = sum(Taxa_Den_Sum),
+            Bio_MEAN = mean(Taxa_Bio_Sum), 
+            Den_MEAN = mean(Taxa_Den_Sum), 
+            Bio_SD = sd(Taxa_Bio_Sum), 
+            Den_SD = sd(Taxa_Den_Sum),
+            N = n(),
+            SE_Bio = Bio_SD / sqrt(N), 
+            SE_Den = Den_SD / sqrt(N))
+
+# Ordering of Rot_GENERA column
+Seasonal_Stats$RotGENERA <- factor(Seasonal_Stats$RotGENERA, levels = c("Other", "Trichocerca", "Polyarthra", "Synchaeta", "Ascomorpha", "Conochilus", "Keratella", "Kellicottia", "Ploesoma", "Collotheca", "Gastropus", "Asplanchna"))
+
+#write.csv(Seasonal_Stats, file = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/Seasonal_Stats.csv")
+
+#write.csv(Taxa_Sum, file = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/Taxa_Sum_New.csv")
+
+Seasonal_All_SUM <- Rotifer_All_Tidy_Parsed %>%
+  group_by(Season, EventID, Date, Julian.Day) %>% 
+  summarise(Rot_Bio_All = sum(Taxa_Bio_Sum), Rot_Den_All = sum(Taxa_Den_Sum)) %>% 
+  ungroup %>% 
+  complete(nesting(Season, EventID), fill = list(Rot_Bio_All = 0, Rot_Den_All = 0))
+
+Seasonal_All_Stats <- Seasonal_All_SUM %>%
+  group_by(Season) %>% 
+  summarise(All_Bio_SUM = sum(Rot_Bio_All), 
+            All_Den_SUM = sum(Rot_Den_All),
+            All_Bio_MEAN = mean(Rot_Bio_All), 
+            All_Den_MEAN = mean(Rot_Den_All), 
+            All_Bio_SD = sd(Rot_Bio_All), 
+            All_Den_SD = sd(Rot_Den_All),
+            N = n(),
+            All_SE_Bio = All_Bio_SD / sqrt(N), 
+            All_SE_Den = All_Den_SD / sqrt(N))
+
+#write.csv(Seasonal_All_Stats, file = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/Seasonal_All_Stats.csv")
+```
+
+
+```{r rotifer genera absolute abundance stack graph, echo = FALSE, warning = FALSE, fig.width = 7, fig.height = 5}
+#creating a color palette for rotifer genera stack graph
+cb_Palette <- c("gray0", "green2", "yellow2", "red2", "navy", "saddlebrown", "magenta3", "cyan3", "orange3", "mediumaquamarine", "seagreen4", "gray60")
+
+Seasonal_Stats$Season <- factor(Seasonal_Stats$Season, levels = c("Early Spring", "Late Spring", "Early Summer", "Summer", "Late Summer", "Early Fall", "Late Fall"))
+
+gg_Seasonal_Rot_Bio <- ggplot(Seasonal_Stats, aes(Season, Bio_MEAN, fill = RotGENERA)) +
+  labs(title = "Rotifer Epi Biomass", x = "Month", y = "Biomass (µg/L)", color = "Genera") + 
+  geom_col(color = "black") +
+  theme_cowplot() +
+#panel border, axis text and title sizes and orientations
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14, angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 18), axis.title.y = element_text(size = 20), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+  #palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(cb_Palette))
+
+gg_Seasonal_Rot_Bio
+#ggsave(filename = 'RotEpiBio_New.TIFF', plot = gg_Rot_Bio, width = 7, height = 5, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Rotifer Genera")
+
+gg_Seasonal_Rot_Den <- ggplot(Seasonal_Stats, aes(Season, Den_MEAN, fill = RotGENERA)) +
+  labs(title = "Rotifer Epi Abundance", x = "Month", y = "Abundance (#/L)", color = "Genera") + 
+  geom_col(color = "black") +
+  theme_cowplot() +
+#panel border, axis text and title sizes and orientations
+   theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14, angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 18), axis.title.y = element_text(size = 20), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(cb_Palette))
+
+gg_Seasonal_Rot_Den
+#ggsave(filename = 'RotEpiAbun_New.TIFF', plot = gg_Rot_Den, width = 7, height = 5, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Rotifer Genera")
+```
+
+
+```{r rotifer genera relative abundance stack graph, echo = FALSE, warning = FALSE, fig.width = 7, fig.height = 5}
+
+#Fig_3_Arrange <- ggarrange(gg_All_Seasonal_Den, gg_All_Seasonal_Bio, gg_Rel_Seasonal_Den, gg_Rel_Seasonal_Bio, 
+ #         labels = c("A", "B", "C", "D"),
+  #        font.label = list(size = 14, face = "bold"),
+   #       label.x = c(0, 0, 0, 0), 
+    #      label.y = c(1, 1, 1.05, 1.05),
+     #     ncol = 2, nrow = 2, 
+      #    align = "v",
+       #   common.legend = TRUE)
+```
+
+
+```{r}
+Seasonal_All_SUM_Updated <- read.csv("C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/Seasonal_All_SUM_Updated.csv")
+
+Rotifer_All_SUM_Parsed <- Seasonal_All_SUM_Updated %>% mutate(Date = mdy(Date))
+
+Rotifer_All_SUM_Parsed$Season <- factor(Rotifer_All_SUM_Parsed$Season, levels = c("Early Spring", "Late Spring", "Early Summer", "Summer", "Late Summer", "Early Fall", "Late Fall"))
+
+#Seasonal_All_SUM$Date <- arrange(Seasonal_All_SUM$Date)
+
+gg_All_SUM_Den_GAM <- ggplot(Rotifer_All_SUM_Parsed, aes(Date, Rot_Den_All)) +
+  labs(title = "Rotifer Epi Abundance", x = "Month", y = "Abundance (#/L)") + 
+  geom_point(color = "black") + 
+  stat_smooth(method = "gam") +
+  theme_cowplot() +
+  #geom_errorbar(aes(ymax = All_Den_MEAN + All_SE_Den, ymin = All_Den_MEAN - All_SE_Den), position = position_dodge(0.9), width = .3) +
+#panel border, axis text and title sizes and orientations
+   theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14, angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 18), axis.title.y = element_text(size = 20), plot.title = element_blank()) + 
+  scale_x_date(date_labels = "%b", date_breaks = "month") +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+#palette color for bar fills; see Barbiero for reference
+  scale_fill_manual(values = c(cb_Palette))
+
+gg_All_SUM_Den_GAM
+#ggsave(filename = 'AllRotSumDenGAM.TIFF', plot = gg_All_SUM_Den_GAM, width = 10, height = 8, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Rotifer Genera")
+```
+
+
+```{r}
+#Test of gam fits for temp, date, and temp+Date with Rotifer abundance 
+library(mgcv)
+
+#Date Gam model with Rot_Den_All
+Date_Gam <- gam(Rot_Den_All~s(Julian.Day),data=Rotifer_All_SUM_Parsed)
+summary(Date_Gam)
+plot(Date_Gam,pages=1,residuals=TRUE)  ## show partial residuals
+plot(Date_Gam,pages=1,seWithMean=TRUE) ## `with intercept' CIs
+## run some basic model checks, including checking
+## smoothing basis dimensions...
+gam.check(Date_Gam)
+
+
+#Temp Gam model with Rot_Den_All
+Temp_Gam <- gam(Rot_Den_All~s(Temp),data=Rotifer_All_SUM_Parsed)
+summary(Temp_Gam)
+plot(Temp_Gam,pages=1,residuals=TRUE)  ## show partial residuals
+plot(Temp_Gam,pages=1,seWithMean=TRUE) ## `with intercept' CIs
+## run some basic model checks, including checking
+## smoothing basis dimensions...
+gam.check(Temp_Gam)
+
+#Temp + Day Gam model with Rot_Den_All
+Temp_Date_Gam <- gam(Rot_Den_All~s(Temp) + s(Julian.Day),data=Rotifer_All_SUM_Parsed)
+summary(Temp_Date_Gam)
+plot(Temp_Date_Gam,pages=1,residuals=TRUE)  ## show partial residuals
+plot(Temp_Date_Gam,pages=1,seWithMean=TRUE) ## `with intercept' CIs
+## run some basic model checks, including checking
+## smoothing basis dimensions...
+gam.check(Temp_Date_Gam)
+
+```
+
+
+```{r}
+# Applying summary sum/mean/sd values for each Zoop_GENERA per month; note the proper N values for each month for both Macro and Micro Taxa
+## Converted Late Fall WWC samples to areal density/biomass (##*Depth); Adjusted areal (m2) to volumetric Epi (m3) (##/20); converted m3 to Liters (##/1000)
+### Removed Limnocalanus Adults from late fall analysis - conflating the calanoid biomass considerably
+New_Zoop_Sum_Stats <- Newest_Complete_Zoop_Bio_Den %>% 
+  filter(Zoop_GENERA != "Other" & Zoop_GENERA != "Mysis") %>% 
+  group_by(Zoop_GENERA, Season) %>%
+  summarise(All_Bio_SUM = sum(Zoop_Bio_Sum), 
+            All_Den_SUM = sum(Zoop_Den_Sum),
+            All_Bio_MEAN = mean(Zoop_Bio_Sum), 
+            All_Den_MEAN = mean(Zoop_Den_Sum), 
+            All_Bio_SD = sd(Zoop_Bio_Sum), 
+            All_Den_SD = sd(Zoop_Den_Sum),
+            N = n(),
+            All_Bio_SE = All_Bio_SD / sqrt(N), 
+            All_Den_SE = All_Den_SD / sqrt(N))
+
+#write.csv(New_Zoop_Sum_Stats, file = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/New_Zoop_Sum_Stats_New.csv")
+
+#Not finished with this code yet
+#Stats for all epi zooplankton figures with SE bars
+New_Zoop_All_SUM <- Newest_Complete_Zoop_Bio_Den %>%
+  filter(Zoop_GENERA != "Other" & Zoop_GENERA != "Mysis") %>% 
+  group_by(EventID, Season) %>% 
+  summarise(Zoop_Bio_All = sum(Zoop_Bio_Sum),
+            Zoop_Den_All = sum(Zoop_Den_Sum)) %>% 
+            ungroup %>% 
+            complete(nesting(Season, EventID), fill = list(Zoop_Bio_All = 0, Zoop_Den_All = 0))
+              
+#filter(DN == "D" | DN == "N") %>% filter(MONTH != "Oct") %>% 
+
+#N values are not correct here, double counting stations on occassion*****************************
+New_Zoop_All_Stats <- New_Zoop_All_SUM %>%
+  group_by(Season) %>%
+  summarise(Zoop_All_Bio_SUM = sum(Zoop_Bio_All),
+            Zoop_All_Abun_SUM = sum(Zoop_Den_All),
+            Zoop_All_Bio_MEAN = mean(Zoop_Bio_All), 
+            Zoop_All_Abun_MEAN = mean(Zoop_Den_All), 
+            Zoop_All_Bio_SD = sd(Zoop_Bio_All), 
+            Zoop_All_Abun_SD = sd(Zoop_Den_All),
+            N = n(),
+            Zoop_All_Bio_SE = Zoop_All_Bio_SD / sqrt(N), 
+            Zoop_All_Den_SE = Zoop_All_Abun_SD / sqrt(N))
+
+#write.csv(New_Zoop_All_Stats, file = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/processed-data/New_Zoop_All_Stats_New.csv")
+```
+
+
+```{r, fig.width = 7, fig.height = 5}
+Rot_Strata_All_Stats$Season <- factor(Rot_Strata_All_Stats$Season, levels = c("Late Spring", "Early Summer", "Summer", "Early Fall"))
+
+gg_Abun_Strata <- ggplot(Rot_Strata_All_Stats, aes(Strata, All_Strata_Den_MEAN, fill = Strata)) +
+  labs(title = "Rotifer Abundance", x = "Month", y = ("Abundance #/L")) + 
+  geom_col(position = "dodge2", color = "black") +
+  facet_grid(cols = vars(Season)) +
+  scale_fill_grey(labels = c("Epi", "Meta", "Hypo")) +
+  theme_cowplot() +
+  geom_errorbar(aes(ymax = All_Strata_Den_MEAN + All_Strata_SE_Den, ymin = All_Strata_Den_MEAN - All_Strata_SE_Den), position = position_dodge(0.9), width = .3) +
+  #theme_classic() +
+#panel border, axis text and title sizes and orientations
+  theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 14), axis.title.y = element_text(size = 18), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "top", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) 
+  
+gg_Abun_Strata
+
+#Fig_2_Arrange <- ggarrange(gg_Abun_Strata, gg_Strata_Den_Prop, 
+ #         labels = c("A", "B"),
+  #        ncol = 2, nrow = 1,
+   #       font.label = list(size = 14, face = "bold"),
+    #      align = "hv")
+  
+#ggsave(filename = 'Strata_All_Den_New.TIFF', plot = gg_Abun_Strata, width = 7, height = 5, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Stratified Tows")
+
+#gg_Strata_All_Den_Dodge <- ggplot(Strata_All, aes(Strata, Strata_All_Abun, fill = Strata)) +
+ # labs(title = "Rotifer Abundance", x = "Month", y = "Abundance (#/L)") + 
+  #geom_col(position = "dodge2", color = "black") +
+  #facet_grid(cols = vars(MONTH)) +
+  #scale_fill_grey() +
+  #theme_cowplot() +
+  #geom_errorbar(aes(ymax = Strata_All_Abun + Strata_All_Abun_SE, ymin = Strata_All_Abun - Strata_All_Abun_SE), position = position_dodge(0.9), width = .3) +
+#panel border, axis text and title sizes and orientations
+  #theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 14), axis.title.y = element_text(size = 18), plot.title = element_blank()) +
+#legend details 
+  #theme(legend.title = element_blank(), legend.position = "top", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14))
+  
+#gg_Strata_All_Den_Dodge
+#significant differences; letters indicate significant differences in rotifer densities among strata within each month. 
+
+library(EnvStats)
+
+gg_SQRT_Abun_Strata <- ggplot(SQRT_Month_Stats, aes(Strata, SQRT_Mean_Den, fill = Strata)) +
+  labs(title = "Rotifer Abundance", x = "Month", y = expression(sqrt("Abundance #/L"))) + 
+  geom_col(position = "dodge2", color = "black") +
+  facet_grid(cols = vars(MONTH)) +
+  scale_fill_grey(labels = c("Epi", "Meta", "Hypo")) +
+  theme_cowplot() +
+  geom_errorbar(aes(ymax = SQRT_Mean_Den + SQRT_SE_Den, ymin = SQRT_Mean_Den - SQRT_SE_Den), position = position_dodge(0.9), width = .3) +
+  #theme_classic() +
+#panel border, axis text and title sizes and orientations
+  theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 14), axis.title.y = element_text(size = 18), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "top", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) 
+  
+gg_SQRT_Abun_Strata
+#ggsave(filename = 'SQRT_Abun_Strata.Tiff', plot = gg_SQRT_Abun_Strata, width = 10, height = 8, path = "C:/Users/cmars/OneDrive/Desktop/CCM Rotifer Assesment/CCM Rotifer Assessment GitHub/figures/Stratified Tows")
+
+gg_DN_Abun_Strata <- ggplot(DN_Strata_Stats, aes(Strata, All_Strata_Den_MEAN, fill = Strata)) +
+  labs(title = "Rotifer Abundance", x = "Month", y = ("Abundance #/L")) + 
+  geom_col(position = "dodge2", color = "black") +
+  #facet_grid(cols = vars(MONTH)) +
+  facet_wrap(vars(DN), nrow = 2) +
+  scale_fill_grey(labels = c("Epi", "Meta", "Hypo")) +
+  theme_cowplot() +
+  #geom_errorbar(aes(ymax = All_Strata_Den_MEAN + All_Strata_SE_Den, ymin = All_Strata_Den_MEAN - All_Strata_SE_Den), position = position_dodge(0.9), width = .3) +
+  #theme_classic() +
+#panel border, axis text and title sizes and orientations
+  theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 14), axis.title.y = element_text(size = 18), plot.title = element_blank()) +
+#legend details 
+  theme(legend.title = element_blank(), legend.position = "top", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) 
+  
+gg_DN_Abun_Strata
+```
+
+
+
+
