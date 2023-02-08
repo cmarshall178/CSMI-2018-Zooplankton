@@ -25,9 +25,9 @@ library(patchwork)
 
 
 ```{r, defining data frame column variables, echo = FALSE, warning = FALSE}
-Zoop_Bio_Den_New <- read_csv("F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Updated Raw Data/Zoop_Bio_Den_New.csv")
+Zoop_Bio_Den_New <- read_csv("C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Updated Raw Data/Zoop_Bio_Den_New.csv")
 
-Areal_Bio_Den_Zoop <- read_csv("F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Updated Raw Data/Areal_Bio_Den_Zoop.csv")
+Areal_Bio_Den_Zoop <- read_csv("C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Updated Raw Data/Areal_Bio_Den_Zoop.csv")
 
 CountType <- Zoop_Bio_Den_New$CountType
 Strata <- Zoop_Bio_Den_New$Strata
@@ -68,6 +68,7 @@ Epi_Micro_Filter <- filter(Epi_Filter, CountType == "MICRO")
 # Completion of Zoop_Bio_Den dataset with implicit zeros for each Zoop_GENERA for each month split by Macro and Micro
 ############Checking Epi Sumgroup data instead of Zoop_GENERA
 Epi_Macro_Zeros <- Epi_Macro_Filter %>% 
+    filter(SPECCODE != "LETKIND" & SPECCODE != "POYPEDI" & SPECCODE != "VELIGER" & SPECCODE != "ROTIFER") %>% 
     group_by(SUMGROUP, Season, Station, EventID, DN, Lat, Long) %>% 
       summarise(Zoop_Bio_Sum = sum(Bio.Liter_New), Zoop_Den_Sum = sum(Den.Liter_New)) %>% 
       ungroup %>% 
@@ -82,7 +83,7 @@ Epi_Micro_Zeros <- Epi_Micro_Filter %>%
 # Joining Micro and Macro values after including implicit zeros for each Zoop_GENERA per EventCodeKey(proxy for station)
 Complete_Epi_Zoop_Bio_Den_New <- full_join(Epi_Macro_Zeros, Epi_Micro_Zeros, copy = F)
 
-#write.csv(Complete_Epi_Zoop_Bio_Den_New, file = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/Complete_Epi_Zoop_Bio_Den_New.csv")
+#write.csv(Complete_Epi_Zoop_Bio_Den_New, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/Complete_Epi_Zoop_Bio_Den_New.csv")
 ```
 
 
@@ -103,7 +104,7 @@ Whole_Epi_Micro_Zeros <- Epi_Micro_Filter %>%
 # Joining Micro and Macro values after including implicit zeros for each Zoop_GENERA per EventCodeKey(proxy for station)
 Whole_Complete_Epi_Zoop_Bio_Den_New <- full_join(Whole_Epi_Macro_Zeros, Whole_Epi_Micro_Zeros, copy = F)
 
-#write.csv(Complete_Epi_Zoop_Bio_Den_New, file = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/Complete_Epi_Zoop_Bio_Den_New.csv")
+#write.csv(Complete_Epi_Zoop_Bio_Den_New, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/Complete_Epi_Zoop_Bio_Den_New.csv")
 ```
 
 
@@ -118,7 +119,7 @@ Complete_WWC_Zoop_Bio_Den_New <- WWC_Filter %>%
       ungroup %>% 
       complete(nesting(Season, Station, EventID, DN, Lat, Long), SUMGROUP, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
 
-#write.csv(Complete_WWC_Zoop_Bio_Den_New, file = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/Complete_WWC_Zoop_Bio_Den_New.csv")
+#write.csv(Complete_WWC_Zoop_Bio_Den_New, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Complete_WWC_Zoop_Bio_Den_New.csv")
 ```
 
 
@@ -133,7 +134,7 @@ Whole_Complete_WWC_Zoop_Bio_Den_New <- WWC_Filter %>%
       ungroup %>% 
       complete(nesting(Season, Station, EventID, DN, Lat, Long), SPECCODE, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
 
-#write.csv(Complete_WWC_Zoop_Bio_Den_New, file = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/Complete_WWC_Zoop_Bio_Den_New.csv")
+#write.csv(Complete_WWC_Zoop_Bio_Den_New, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Complete_WWC_Zoop_Bio_Den_New.csv")
 ```
 
 
@@ -169,9 +170,9 @@ Whole_Epi_Sum_Stats <- Whole_Complete_Epi_Zoop_Bio_Den_New %>%
             All_Bio_SE = All_Bio_SD / sqrt(N), 
             All_Den_SE = All_Den_SD / sqrt(N))
 
-#write.csv(Epi_Sum_Stats, file = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/Epi_Sum_Stats.csv")
+#write.csv(Epi_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/Epi_Sum_Stats.csv")
 
-#write.csv(Whole_Epi_Sum_Stats, file = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/PRED_CLA_Epi_Sum_Stats.csv")
+#write.csv(Whole_Epi_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/PRED_CLA_Epi_Sum_Stats.csv")
 
 #Not finished with this code yet
 #Stats for all epi zooplankton figures with SE bars
@@ -199,7 +200,7 @@ Epi_All_Stats <- Epi_All_SUM %>%
             Zoop_All_Den_SE = Zoop_All_Abun_SD / sqrt(N))
 
 
-#write.csv(Epi_All_Stats, file = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/Epi_SumGroup_Macro_All_Stats.csv")
+#write.csv(Epi_All_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/Epi_SumGroup_Macro_All_Stats.csv")
 ```
 
 
@@ -234,18 +235,18 @@ Whole_WWC_Sum_Stats <- Whole_Complete_WWC_Zoop_Bio_Den_New %>%
             All_Den_SE = All_Den_SD / sqrt(N))
 
 
-WWC_Sum_Stats$SUMGROUP <- factor(WWC_Sum_Stats$SUMGROUP, levels = c("LIMNO", "CALANOID", "CYCLOPOID", "CERC", "BYTH",  "DAPHNID", "BOSMINID", "NDAP"))
+WWC_Sum_Stats$SUMGROUP <- factor(WWC_Sum_Stats$SUMGROUP, levels = c("LIMNO", "CALANOID", "CYCLOPOID", "DAPHNID", "BOSMINID", "NDAP"))
 
 Whole_WWC_Sum_Stats$SPECCODE <- factor(Whole_WWC_Sum_Stats$SPECCODE, levels = c("BYTLONG", "CECPENG", "LETKIND", "POYPEDI"))
 
-#write.csv(Whole_WWC_Sum_Stats, file = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/PRED_CLA_WWC_Sum_Stats")
+#write.csv(WWC_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/WWC_Sum_Stats")
 
 ###WWC_Sum_Stats$SUMGROUP <- factor(WWC_Sum_Stats$SUMGROUP, levels = c("LETKIND", "HOLGIBB", "POYPEDI", "BOSLONG", "EUBCORE", "DAPSP", "DAPRETR", "DAPGALEM", "BYTLONG", "CECPENG", "DIYTHOM", "CYCCOPE", "MESCOPE", "MESEDAX" "TROPRASM", "DIACOPE", "LEOASHL", "LEOMINU", "LEOSICI", "SKIOREG", "EPILACU", "EPICOPE", "LIMCOPE", "LIMMACR"))
 
 #Not finished with this code yet
 #Stats for all epi zooplankton figures with SE bars
 WWC_All_SUM <- Complete_WWC_Zoop_Bio_Den_New %>%
-  filter(SUMGROUP != "OTHER" & SUMGROUP != "MYSID" & SUMGROUP != "VELIGER" & SUMGROUP != "ROTIFER" & SUMGROUP != "pNAUPLII") %>% 
+  filter(SUMGROUP != "OTHER" & SUMGROUP != "MYSID" & SUMGROUP != "VELIGER" & SUMGROUP != "ROTIFER" & SUMGROUP != "pNAUPLII" & SUMGROUP != "BYTH" & SUMGROUP != "CERC") %>% 
   group_by(EventID, Season) %>% 
   summarise(Zoop_Bio_All = sum(Zoop_Bio_Sum),
             Zoop_Den_All = sum(Zoop_Den_Sum)) %>% 
@@ -265,7 +266,7 @@ WWC_All_Stats <- WWC_All_SUM %>%
             Zoop_All_Den_SE = Zoop_All_Abun_SD / sqrt(N))
 
 
-#write.csv(WWC_All_Stats, file = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/WWC_Sum_Stats")
+#write.csv(WWC_All_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/WWC_Sum_Stats")
 ```
 
 
@@ -276,7 +277,8 @@ Whole_WWC_Sum_Stats$Season <- factor(Whole_WWC_Sum_Stats$Season, levels = c("Ear
 WWC_Sum_Stats$Season <- factor(WWC_Sum_Stats$Season, levels = c("Early Spring", "Late Spring", "Early Summer", "Summer", "Late Summer", "Early Fall", "Late Fall"))
 
 # Structure for Barbiero similar color palette
-Barb_Palette <- c("blue2", "cyan3", "yellow2", "orange3", "saddlebrown", "red2", "seagreen4", "mediumorchid4")
+Barb_Palette <- c("blue2", "cyan3", "yellow2", "red2", "seagreen4", "mediumorchid4")
+Pred_Cla_Palette <- c("orange3", "gray0", "green2", "navy")
 
 # structure for potentially useful color palettes
 crazy_Palette <- c("gray0", "green2", "yellow2", "red2", "navy", "saddlebrown", "magenta3", "cyan3", "orange3", "mediumaquamarine", "seagreen4", "mediumorchid4", "firebrick")
@@ -291,17 +293,17 @@ gg_BIO_All <- ggplot(Whole_WWC_Sum_Stats, aes(x = Season, y = All_Bio_MEAN, fill
 #legend details 
   theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 20)) +
 #palette color for bar fills; see Barbiero for reference
-  scale_fill_manual(values = c(Barb_Palette)) +
+  scale_fill_manual(values = c(Pred_Cla_Palette)) +
   labs(x = "Month", y = "Biomass (µg/L)") +
   ylim(0,1.5)
 
 #plot the above graph
 gg_BIO_All
 
-#ggsave(filename = 'Avg_Pred_Cla_WWC_Bio.TIFF', plot = gg_BIO_All, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment")
+#ggsave(filename = 'Avg_Pred_Cla_WWC_Bio.TIFF', plot = gg_BIO_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Figures/WWC")
 
 #plotting average density for all taxa from epi per month
-gg_DEN_All <- ggplot(data = Whole_WWC_Sum_Stats, aes(x = Season, y = All_Den_MEAN, fill = SPECCODE))  + 
+gg_DEN_All <- ggplot(Whole_WWC_Sum_Stats, aes(x = Season, y = All_Den_MEAN, fill = SPECCODE))  + 
    geom_bar(color = "black", stat = "identity") + 
   #panel border, axis text and title sizes and orientations
   theme_cowplot() +
@@ -309,26 +311,26 @@ gg_DEN_All <- ggplot(data = Whole_WWC_Sum_Stats, aes(x = Season, y = All_Den_MEA
 #legend details 
   theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
 #palette color for bar fills; see Barbiero for reference
-  scale_fill_manual(values = c(Barb_Palette)) +
+  scale_fill_manual(values = c(Pred_Cla_Palette)) +
   labs(x = "Month", y = "Abundance (#/L)") +
   ylim(0,0.3)
 
 #plot the above graph
 gg_DEN_All 
 
-#ggsave(filename = 'Avg_Pred_Cla_WWC_Den.TIFF', plot = gg_DEN_All, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+#ggsave(filename = 'Avg_Pred_Cla_WWC_Den.TIFF', plot = gg_DEN_All, width = 10, height = 8, path ="C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Figures/WWC")
 ```
 
 
 ```{r zoop genera relative abundance transformation code, echo = FALSE, warning = FALSE}
-#code used to group the Zoop_Sum_Stats Mean abundance data for each rotifer genera per month and mutate (transform) the mean values into relative abundances
+#code used to group the Zoop_Sum_Stats Mean abundance data for each zoop genera per month and mutate (transform) the mean values into relative abundances
 WWC_Zoop_Prop <-
-  WWC_Sum_Stats %>%
-    select(SUMGROUP, Season, All_Bio_MEAN, All_Den_MEAN) %>%
+  Whole_WWC_Sum_Stats %>%
+    select(SPECCODE, Season, All_Bio_MEAN, All_Den_MEAN) %>%
     group_by(Season)%>%
     mutate(Zoop_Prop_Bio = (All_Bio_MEAN / sum(All_Bio_MEAN) * 100), Zoop_Prop_Abun = (All_Den_MEAN / sum(All_Den_MEAN) * 100))
 
-#write.csv(WWC_Zoop_Prop, file = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Processed Data/WWC_Zoop_Prop")
+write.csv(Pred_Cla_WWC_Zoop_Prop, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/WWC_Sum_Stats")
 ```
 
 
