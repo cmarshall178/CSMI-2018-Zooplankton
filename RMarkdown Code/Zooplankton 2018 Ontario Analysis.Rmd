@@ -145,7 +145,7 @@ Whole_Complete_WWC_Zoop_Bio_Den_New <- WWC_Filter %>%
 ```{r Calculating summary stats (sum/mean/sd/se) for each Zoop_GENERA per month, echo = TRUE, warning = FALSE}
 # Applying summary sum/mean/sd values for each Zoop_GENERA per month; note the proper N values for each month for both Macro and Micro Taxa
 
-##############Code edited for SUMGROUP instead of Zoop_GENERA########### Also excluded micro sumgroup data ### Excluding Pred Cla 2/28/2023
+##############Code edited for SUMGROUP instead of Zoop_GENERA########### Also excluded micro sumgroup data ### Excluding Pred Cla 2/8/2023
 Epi_Sum_Stats <- Complete_Epi_Zoop_Bio_Den_New %>% 
   filter(SUMGROUP != "OTHER" & SUMGROUP != "MYSID" & SUMGROUP != "VELIGER" & SUMGROUP != "ROTIFER" & SUMGROUP != "pNAUPLII" & SUMGROUP != "BYTH" & SUMGROUP != "CERC") %>% 
   group_by(SUMGROUP, Season) %>%
