@@ -26,9 +26,10 @@ library(patchwork)
 
 
 ```{r, defining data frame column variables, echo = FALSE, warning = FALSE}
-Zoop_Bio_Den_New <- read_csv("C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Updated Raw Data/Zoop_Bio_Den_New.csv")
 
-Areal_Bio_Den_Zoop <- read_csv("C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Updated Raw Data/Areal_Bio_Den_Zoop.csv")
+Zoop_Bio_Den_New <- read_csv("C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Updated Raw Data/Zoop_Bio_Den_New.csv")
+
+Areal_Bio_Den_Zoop <- read_csv("C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Updated Raw Data/Areal_Bio_Den_Zoop.csv")
 
 CountType <- Zoop_Bio_Den_New$CountType
 Strata <- Zoop_Bio_Den_New$Strata
