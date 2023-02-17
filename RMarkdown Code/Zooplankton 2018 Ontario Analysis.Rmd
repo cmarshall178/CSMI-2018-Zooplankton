@@ -404,11 +404,11 @@ crazy_Palette <- c("gray0", "green2", "yellow2", "red2", "navy", "saddlebrown", 
 crazy_Palette2 <- c("gray0", "green2", "yellow2", "red2", "navy", "saddlebrown", "magenta3", "cyan3")
 
 #plotting average biomass for all taxa from epi per month 
-gg_BIO_All <- ggplot(Areal_WWC_Sum_Stats, aes(x = Year, y = All_Bio_MEAN, fill = Species)) + 
+gg_BIO_All <- ggplot(Areal_WWC_Sum_Stats, aes(x = Season, y = All_Bio_MEAN, fill = SUMGROUP)) + 
   geom_bar(color = "black", stat = "identity") + 
   #panel border, axis text and title sizes and orientations
   theme_cowplot() +
- theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 22, angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 22), axis.title.y = element_text(size = 26), plot.title = element_blank()) +
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 22), axis.title.y = element_text(size = 26), plot.title = element_blank()) +
 #legend details 
   theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 20)) +
 #palette color for bar fills; see Barbiero for reference
@@ -416,13 +416,14 @@ gg_BIO_All <- ggplot(Areal_WWC_Sum_Stats, aes(x = Year, y = All_Bio_MEAN, fill =
   labs(x = "Month", y = "Biomass (m2)") 
   #ylim(0,1.5)
 
+#element_text(size = 22, angle = 45, vjust = 1, hjust = 1)
 #plot the above graph
 gg_BIO_All
 
 #ggsave(filename = 'Areal_WWC_Bio_Sum_Stats.TIFF', plot = gg_BIO_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
 
 #plotting average density for all taxa from epi per month
-gg_DEN_All <- ggplot(Invasive_Zoops_JKC_Sum_Stats, aes(x = Year, y = All_Den_MEAN, fill = Species))  + 
+gg_DEN_All <- ggplot(Areal_WWC_Sum_Stats, aes(x = Year, y = All_Den_MEAN, fill = SUMGROUP))  + 
    geom_bar(color = "black", stat = "identity") + 
   #panel border, axis text and title sizes and orientations
   theme_cowplot() +
@@ -431,9 +432,10 @@ gg_DEN_All <- ggplot(Invasive_Zoops_JKC_Sum_Stats, aes(x = Year, y = All_Den_MEA
   theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
 #palette color for bar fills; see Barbiero for reference
   scale_fill_manual(values = c(Barb_Palette)) +
-  labs(x = "Month", y = "Abundance (m2)") +
-  scale_y_sqrt() +
-  scale_y_break(c(2000, 5000))
+  labs(x = "Month", y = "Abundance (m2)") 
+  
+  #scale_y_sqrt() +
+  #scale_y_break(c(2000, 5000))
   #ylim(0,0.3)
 
 #plot the above graph
@@ -495,7 +497,7 @@ gg_Rel_Zoop_Den <- ggplot(Areal_WWC_Zoop_Prop, aes(x = Season, y = Zoop_Prop_Abu
 
 gg_Rel_Zoop_Den 
 
-#ggsave(filename = 'Areal_WWC_Den_Zoop_Prop.TIFF', plot = gg_Rel_Zoop_Den, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
+#ggsave(filename = 'Areal_WWC_Den_Zoop_Prop.TIFF', plot = gg_Rel_Zoop_Den, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/Figures/WWC/Areal")
 
 WWC_All_Zoop_Figure <- ggarrange(gg_DEN_All, gg_BIO_All, gg_Rel_Zoop_Den, gg_Rel_Zoop_Bio, 
         labels = c("A", "B", "C", "D"),
@@ -555,7 +557,7 @@ gg_Epi_BIO_All <- ggplot(Areal_Epi_Sum_Stats, aes(x = Season, y = All_Bio_MEAN, 
 #plot the above graph
 gg_Epi_BIO_All
 
-#ggsave(filename = 'Areal_Epi_Bio_Stats.TIFF', plot = gg_Epi_BIO_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Figures/EPI/Areal")
+#ggsave(filename = 'Areal_Epi_Bio_Stats.TIFF', plot = gg_Epi_BIO_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/EPI/Areal")
 
 
 #plotting average density for all taxa from epi per month
@@ -574,7 +576,7 @@ gg_Epi_DEN_All <- ggplot(data = Areal_Epi_Sum_Stats, aes(x = Season, y = All_Den
 #plot the above graph
 gg_Epi_DEN_All 
 
-#ggsave(filename = 'Areal_Epi_Den_Stats.TIFF', plot = gg_Epi_DEN_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Figures/EPI/Areal")
+#ggsave(filename = 'Areal_Epi_Den_Stats.TIFF', plot = gg_Epi_DEN_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/EPI/Areal")
 ```
 
 
@@ -618,7 +620,7 @@ gg_Rel_Epi_Zoop_Bio <- ggplot(Areal_Epi_Zoop_Prop, aes(x = Season, y = Zoop_Prop
   labs(x = "Month", y = "% Biomass") 
 
 gg_Rel_Epi_Zoop_Bio
-#ggsave(filename = 'Areal_Epi_Bio_Zoop_Prop.TIFF', plot = gg_Rel_Epi_Zoop_Bio, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Figures/EPI/Areal")
+#ggsave(filename = 'Areal_Epi_Bio_Zoop_Prop.TIFF', plot = gg_Rel_Epi_Zoop_Bio, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/EPI/Areal")
 
 
 gg_Rel_Epi_Zoop_Den <- ggplot(Areal_Epi_Zoop_Prop, aes(x = Season, y = Zoop_Prop_Abun, fill = SUMGROUP)) +
@@ -633,7 +635,7 @@ gg_Rel_Epi_Zoop_Den <- ggplot(Areal_Epi_Zoop_Prop, aes(x = Season, y = Zoop_Prop
   labs(x = "Month", y = "% Abundance") 
 
 gg_Rel_Epi_Zoop_Den 
-#ggsave(filename = 'Areal_Epi_Den_Zoop_Prop.TIFF', plot = gg_Rel_Epi_Zoop_Den, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Figures/EPI/Areal")
+#ggsave(filename = 'Areal_Epi_Den_Zoop_Prop.TIFF', plot = gg_Rel_Epi_Zoop_Den, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/EPI/Areal")
 
 
 Epi_All_Zoop_Figure <- ggarrange(gg_Epi_DEN_All, gg_Epi_BIO_All, gg_Rel_Epi_Zoop_Den, gg_Rel_Epi_Zoop_Bio, 
@@ -658,23 +660,27 @@ Epi_All_Zoop_Figure
 
 Epi_All_Stats$Season <- factor(Epi_All_Stats$Season, levels = c("Early Spring", "Late Spring", "Early Summer", "Summer", "Late Summer", "Early Fall"))
 
-Invasive_Zoops_JKC_All_Stats$Year <- factor(Invasive_Zoops_JKC_All_Stats$Year, levels = c(2012,2013,2014,2015,2016,2017,2018,2019))
+#Invasive_Zoops_JKC_All_Stats$Year <- factor(Invasive_Zoops_JKC_All_Stats$Year, levels = c(2012,2013,2014,2015,2016,2017,2018,2019))
 
-gg_DEN_All_Epi_Total <- ggplot(Invasive_Zoops_JKC_All_Stats, aes(x = Year, y = Zoop_All_Abun_MEAN))  + 
+gg_DEN_All_Epi_Total <- ggplot(Epi_All_Stats, aes(x = Season, y = Zoop_All_Abun_MEAN))  + 
    geom_bar(color = "black", stat = "identity") + 
   #panel border, axis text and title sizes and orientations
   theme_cowplot() +
   geom_errorbar(aes(ymax = Zoop_All_Abun_MEAN + Zoop_All_Den_SE, ymin = Zoop_All_Abun_MEAN - Zoop_All_Den_SE, position = "identity", width = .25)) +
  theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14, face = "bold", angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 24), axis.title.y = element_text(size = 28), plot.title = element_blank()) +
 #legend details 
-  theme(legend.title = element_blank(), legend.position = "top", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
 #palette color for bar fills; see Barbiero for reference
   scale_fill_manual(values = c(Barb_Palette)) +
-  labs(x = "Month", y = "Abundance (m3)") 
+  labs(x = "Month", y = "Abundance (m2)") 
+  
+  #scale_y_sqrt() +
+  #scale_y_break(c(2000, 5000))
   #ylim(0, 30)
 
 gg_DEN_All_Epi_Total
-#ggsave(filename = 'Avg_Den_All_Epi_Total.TIFF', plot = gg_DEN_All_Epi_Total, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+
+#ggsave(filename = 'Avg_Den_All_Epi_Total.TIFF', plot = gg_DEN_All_Epi_Total, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/Epi")
 
 #Total Summed avg abun values and total Summed error bars for zooplankton
 gg_BIO_All_Epi_Total <- ggplot(Epi_All_Stats, aes(x = Season, y = Zoop_All_Bio_MEAN))  + 
@@ -687,10 +693,10 @@ gg_BIO_All_Epi_Total <- ggplot(Epi_All_Stats, aes(x = Season, y = Zoop_All_Bio_M
   theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
 #palette color for bar fills; see Barbiero for reference
   scale_fill_manual(values = c(Barb_Palette)) +
-  labs(x = "Month", y = "Biomass (µg/L)") 
+  labs(x = "Month", y = "Biomass (m2)") 
 
 gg_BIO_All_Epi_Total
-#ggsave(filename = 'Avg_Bio_All_Epi_Total.TIFF', plot = gg_BIO_All_Epi_Total, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+#ggsave(filename = 'Avg_Bio_All_Epi_Total.TIFF', plot = gg_BIO_All_Epi_Total, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/Epi")
 
 Epi_All_Stats_Zoop_Figure <- ggarrange(gg_DEN_All_Epi_Total, gg_BIO_All_Epi_Total,
         labels = c("A", "B"),
@@ -703,7 +709,7 @@ Epi_All_Stats_Zoop_Figure <- ggarrange(gg_DEN_All_Epi_Total, gg_BIO_All_Epi_Tota
 
 Epi_All_Stats_Zoop_Figure
 
-#ggsave(filename = 'Epi_All_Zoop_Stats_Figure.TIFF', plot = Epi_All_Stats_Zoop_Figure, width = 10, height = 8, path = "F:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
+#ggsave(filename = 'Epi_All_Zoop_Stats_Figure.TIFF', plot = Epi_All_Stats_Zoop_Figure, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/Epi")
 ```
 
 
