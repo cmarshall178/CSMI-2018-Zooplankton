@@ -47,6 +47,7 @@ Biomass <- Zoop_Bio_Den_New$Bio.Liter_New
 Station <- Zoop_Bio_Den_New$Station
 DN <- Zoop_Bio_Den_New$DN
 EventID <- Zoop_Bio_Den_New$EventID
+Basin <- Zoop_Bio_Den_New$Basin
 
 Whole_CountType <- Areal_Bio_Den_Zoop$CountType
 Whole_Strata <- Areal_Bio_Den_Zoop$Strata
@@ -84,10 +85,10 @@ Areal_Epi_Micro_Filter <- filter(Areal_Epi_Filter, CountType == "MICRO")
 ############Checking Epi Sumgroup data instead of Zoop_GENERA
 Epi_Macro_Zeros <- Epi_Macro_Filter %>% 
     filter(SPECCODE != "LETKIND" & SPECCODE != "POYPEDI" & SPECCODE != "VELIGER" & SPECCODE != "ROTIFER") %>% 
-    group_by(SUMGROUP, Season, Station, EventID, DN, Lat, Long) %>% 
+    group_by(SUMGROUP, Season, Station, EventID, DN, Lat, Long, Basin) %>% 
       summarise(Zoop_Bio_Sum = sum(Bio.Liter_New), Zoop_Den_Sum = sum(Den.Liter_New)) %>% 
       ungroup %>% 
-      complete(nesting(Season, Station, EventID, DN, Lat, Long), SUMGROUP, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
+      complete(nesting(Season, Station, EventID, DN, Lat, Long, Basin), SUMGROUP, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
 
 #removing most unnecessary taxa for now 2/26/2023 - consider separating Byth/Cerc as well
 
@@ -100,10 +101,10 @@ Areal_Epi_Macro_Zeros <- Areal_Epi_Macro_Filter %>%
 
 
 Epi_Micro_Zeros <- Epi_Micro_Filter %>% 
-    group_by(SUMGROUP, Season, Station, EventID, DN, Lat, Long) %>% 
+    group_by(SUMGROUP, Season, Station, EventID, DN, Lat, Long, Basin) %>% 
       summarise(Zoop_Bio_Sum = sum(Bio.Liter_New), Zoop_Den_Sum = sum(Den.Liter_New)) %>% 
       ungroup %>% 
-      complete(nesting(Season, Station, EventID, DN, Lat, Long), SUMGROUP, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
+      complete(nesting(Season, Station, EventID, DN, Lat, Long, Basin), SUMGROUP, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
 
 Areal_Epi_Micro_Zeros <- Areal_Epi_Micro_Filter %>% 
     group_by(SUMGROUP, Season, Station, EventCode, DN, Lat, Long, Transect, Basin) %>% 
@@ -125,10 +126,16 @@ Complete_Areal_Epi_Bio_Den_Zoop <- full_join(Areal_Epi_Macro_Zeros, Areal_Epi_Mi
 ```{r echo = TRUE, warning = FALSE}
 #Checking Epi SPECCODE data 
 Whole_Epi_Macro_Zeros <- Epi_Macro_Filter %>% 
-    group_by(SPECCODE, Season, Station, EventID, DN, Lat, Long) %>% 
+    group_by(SPECCODE, Season, Station, EventID, DN, Lat, Long, Basin) %>% 
       summarise(Zoop_Bio_Sum = sum(Bio.Liter_New), Zoop_Den_Sum = sum(Den.Liter_New)) %>% 
       ungroup %>% 
-      complete(nesting(Season, Station, EventID, DN, Lat, Long), SPECCODE, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
+      complete(nesting(Season, Station, EventID, DN, Lat, Long, Basin), SPECCODE, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
+
+Areal_Whole_Epi_Macro_Zeros <- Areal_Epi_Macro_Filter %>% 
+    group_by(SPECCODE, Season, Station, EventCode, DN, Lat, Long, Basin) %>% 
+      summarise(Zoop_Bio_Sum = sum(`Areal Biomass m2`), Zoop_Den_Sum = sum(`Areal Density m2`)) %>% 
+      ungroup %>% 
+      complete(nesting(Season, Station, EventCode, DN, Lat, Long, Basin), SPECCODE, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
 
 ################################################################################################
 #filter(SPECCODE != "LETKIND" & SPECCODE != "POYPEDI" & SPECCODE != "VELIGER" & SPECCODE != "ROTIFER")
@@ -152,10 +159,10 @@ WWC_Filter <- filter(Zoop_Bio_Den_New, Strata == "wwc")
 
 # Completion of Zoop_Bio_Den dataset with implicit zeros for each Zoop_GENERA for each month split by Macro and Micro
 Complete_WWC_Zoop_Bio_Den_New <- WWC_Filter %>% 
-    group_by(SUMGROUP, Season, Station, EventID, DN, Lat, Long) %>% 
+    group_by(SUMGROUP, Season, Station, EventID, DN, Lat, Long, Basin) %>% 
       summarise(Zoop_Bio_Sum = sum(Bio.Liter_New), Zoop_Den_Sum = sum(Den.Liter_New)) %>% 
       ungroup %>% 
-      complete(nesting(Season, Station, EventID, DN, Lat, Long), SUMGROUP, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
+      complete(nesting(Season, Station, EventID, DN, Lat, Long, Basin), SUMGROUP, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
 
 #write.csv(Complete_WWC_Zoop_Bio_Den_New, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Complete_WWC_Zoop_Bio_Den_New.csv")
 
@@ -179,10 +186,10 @@ WWC_Filter <- filter(Zoop_Bio_Den_New, Strata == "wwc")
 
 # Completion of Zoop_Bio_Den dataset with implicit zeros for each Zoop_GENERA for each month split by Macro and Micro
 Whole_Complete_WWC_Zoop_Bio_Den_New <- WWC_Filter %>% 
-    group_by(SPECCODE, Season, Station, EventID, DN, Lat, Long) %>% 
+    group_by(SPECCODE, Season, Station, EventID, DN, Lat, Long, Basin) %>% 
       summarise(Zoop_Bio_Sum = sum(Bio.Liter_New), Zoop_Den_Sum = sum(Den.Liter_New)) %>% 
       ungroup %>% 
-      complete(nesting(Season, Station, EventID, DN, Lat, Long), SPECCODE, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
+      complete(nesting(Season, Station, EventID, DN, Lat, Long, Basin), SPECCODE, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
 
 #write.csv(Complete_WWC_Zoop_Bio_Den_New, file = ""C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Complete_WWC_Zoop_Bio_Den_New.csv")
 ```
@@ -194,7 +201,7 @@ Whole_Complete_WWC_Zoop_Bio_Den_New <- WWC_Filter %>%
 ##############Code edited for SUMGROUP instead of Zoop_GENERA########### Also excluded micro sumgroup data ### Excluding Pred Cla 2/28/2023
 Epi_Sum_Stats <- Complete_Epi_Zoop_Bio_Den_New %>% 
   filter(SUMGROUP != "OTHER" & SUMGROUP != "MYSID" & SUMGROUP != "VELIGER" & SUMGROUP != "ROTIFER" & SUMGROUP != "pNAUPLII" & SUMGROUP != "BYTH" & SUMGROUP != "CERC") %>% 
-  group_by(SUMGROUP, Season) %>%
+  group_by(SUMGROUP, Season, Basin) %>%
   summarise(All_Bio_SUM = sum(Zoop_Bio_Sum), 
             All_Den_SUM = sum(Zoop_Den_Sum),
             All_Bio_MEAN = mean(Zoop_Bio_Sum), 
@@ -222,7 +229,7 @@ Epi_Sum_Stats <- Complete_Epi_Zoop_Bio_Den_New %>%
 #filter for only Byth and Cerc
 Whole_Epi_Sum_Stats <- Whole_Complete_Epi_Zoop_Bio_Den_New %>% 
   filter(SPECCODE == "BYTLONG" | SPECCODE == "CECPENG" | SPECCODE == "LETKIND" | SPECCODE == "POYPEDI") %>% 
-  group_by(SPECCODE, Season) %>%
+  group_by(SPECCODE, Season, Basin) %>%
   summarise(All_Bio_SUM = sum(Zoop_Bio_Sum), 
             All_Den_SUM = sum(Zoop_Den_Sum),
             All_Bio_MEAN = mean(Zoop_Bio_Sum), 
@@ -236,7 +243,7 @@ Whole_Epi_Sum_Stats <- Whole_Complete_Epi_Zoop_Bio_Den_New %>%
 
 Areal_Epi_Sum_Stats <- Complete_Areal_Epi_Bio_Den_Zoop %>% 
   filter(SUMGROUP != "VELIGER" & SUMGROUP != "ROTIFER" & SUMGROUP != "pNAUPLII" & SUMGROUP != "BYTH" & SUMGROUP != "CERC") %>% 
-  group_by(Season, SUMGROUP) %>%
+  group_by(Season, SUMGROUP, Basin) %>%
   summarise(All_Bio_SUM = sum(Zoop_Bio_Sum), 
             All_Den_SUM = sum(Zoop_Den_Sum),
             All_Bio_MEAN = mean(Zoop_Bio_Sum), 
@@ -257,7 +264,7 @@ Areal_Epi_Sum_Stats <- Complete_Areal_Epi_Bio_Den_Zoop %>%
 #Stats for all epi zooplankton figures with SE bars
 Epi_All_SUM <- Complete_Epi_Zoop_Bio_Den_New %>%
   filter(SUMGROUP != "OTHER" & SUMGROUP != "MYSID" & SUMGROUP != "VELIGER" & SUMGROUP != "ROTIFER" & SUMGROUP != "pNAUPLII") %>% 
-  group_by(EventID, Season) %>% 
+  group_by(EventID, Season, Basin) %>% 
   summarise(Zoop_Bio_All = sum(Zoop_Bio_Sum),
             Zoop_Den_All = sum(Zoop_Den_Sum)) %>% 
             ungroup %>% 
@@ -274,7 +281,7 @@ Epi_All_SUM <- Complete_Epi_Zoop_Bio_Den_New %>%
 ####################Late fall samples only include micro - haven't included areal density caculations for macro samples yet.
 
 Epi_All_Stats <- Epi_All_SUM %>%
-  group_by(Season) %>%
+  group_by(Season, Basin) %>%
   summarise(Zoop_All_Bio_SUM = sum(Zoop_Bio_All),
             Zoop_All_Abun_SUM = sum(Zoop_Den_All),
             Zoop_All_Bio_MEAN = mean(Zoop_Bio_All), 
@@ -307,7 +314,7 @@ Epi_All_Stats <- Epi_All_SUM %>%
 # Applying summary sum/mean/sd values for each Zoop_GENERA per month; note the proper N values for each month for both Macro and Micro Taxa
 WWC_Sum_Stats <- Complete_WWC_Zoop_Bio_Den_New %>% 
   filter(SUMGROUP != "OTHER" & SUMGROUP != "MYSID" & SUMGROUP != "BYTH" & SUMGROUP != "CERC") %>% 
-  group_by(SUMGROUP, Season) %>%
+  group_by(SUMGROUP, Season, Basin) %>%
   summarise(All_Bio_SUM = sum(Zoop_Bio_Sum), 
             All_Den_SUM = sum(Zoop_Den_Sum),
             All_Bio_MEAN = mean(Zoop_Bio_Sum), 
@@ -322,7 +329,7 @@ WWC_Sum_Stats <- Complete_WWC_Zoop_Bio_Den_New %>%
 
 Whole_WWC_Sum_Stats <- Whole_Complete_WWC_Zoop_Bio_Den_New %>% 
   filter(SPECCODE == "BYTLONG" | SPECCODE == "CECPENG" | SPECCODE == "LETKIND" | SPECCODE == "POYPEDI") %>% 
-  group_by(SPECCODE, Season) %>%
+  group_by(SPECCODE, Season, Basin) %>%
   summarise(All_Bio_SUM = sum(Zoop_Bio_Sum), 
             All_Den_SUM = sum(Zoop_Den_Sum),
             All_Bio_MEAN = mean(Zoop_Bio_Sum), 
@@ -335,7 +342,7 @@ Whole_WWC_Sum_Stats <- Whole_Complete_WWC_Zoop_Bio_Den_New %>%
 
 Areal_WWC_Sum_Stats <- Areal_WWC_Zoop_Bio_Den %>% 
   filter(SUMGROUP != "BYTH" & SUMGROUP != "CERC" & SUMGROUP != "OTHER") %>% 
-  group_by(SUMGROUP, Season) %>%
+  group_by(SUMGROUP, Season, Basin) %>%
   summarise(All_Bio_SUM = sum(Zoop_Bio_Sum), 
             All_Den_SUM = sum(Zoop_Den_Sum),
             All_Bio_MEAN = mean(Zoop_Bio_Sum), 
@@ -352,9 +359,11 @@ Whole_WWC_Sum_Stats$SPECCODE <- factor(Whole_WWC_Sum_Stats$SPECCODE, levels = c(
 
 Areal_WWC_Sum_Stats$SUMGROUP <- factor(Areal_WWC_Sum_Stats$SUMGROUP, levels = c("LIMNO", "CALANOID", "CYCLOPOID", "DAPHNID", "BOSMINID", "NDAP"))
 
-#write.csv(WWC_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/WWC_Sum_Stats")
+#write.csv(WWC_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Basin_WWC_Sum_Stats")
 
-#write.csv(Areal_WWC_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Areal_WWC_Sum_Stats")
+#write.csv(Whole_WWC_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Basin_WWC_Sum_Stats")
+
+#write.csv(Areal_WWC_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Basin_Areal_WWC_Sum_Stats")
 
 ###WWC_Sum_Stats$SUMGROUP <- factor(WWC_Sum_Stats$SUMGROUP, levels = c("LETKIND", "HOLGIBB", "POYPEDI", "BOSLONG", "EUBCORE", "DAPSP", "DAPRETR", "DAPGALEM", "BYTLONG", "CECPENG", "DIYTHOM", "CYCCOPE", "MESCOPE", "MESEDAX" "TROPRASM", "DIACOPE", "LEOASHL", "LEOMINU", "LEOSICI", "SKIOREG", "EPILACU", "EPICOPE", "LIMCOPE", "LIMMACR"))
 
@@ -362,14 +371,14 @@ Areal_WWC_Sum_Stats$SUMGROUP <- factor(Areal_WWC_Sum_Stats$SUMGROUP, levels = c(
 #Stats for all epi zooplankton figures with SE bars
 WWC_All_SUM <- Complete_WWC_Zoop_Bio_Den_New %>%
   filter(SUMGROUP != "OTHER" & SUMGROUP != "MYSID" & SUMGROUP != "VELIGER" & SUMGROUP != "ROTIFER" & SUMGROUP != "pNAUPLII" & SUMGROUP != "BYTH" & SUMGROUP != "CERC") %>% 
-  group_by(EventID, Season) %>% 
+  group_by(EventID, Season, Basin) %>% 
   summarise(Zoop_Bio_All = sum(Zoop_Bio_Sum),
             Zoop_Den_All = sum(Zoop_Den_Sum)) %>% 
             ungroup %>% 
             complete(nesting(Season, EventID), fill = list(Zoop_Bio_All = 0, Zoop_Den_All = 0))
 
 WWC_All_Stats <- WWC_All_SUM %>%
-  group_by(Season) %>%
+  group_by(Season, Basin) %>%
   summarise(Zoop_All_Bio_SUM = sum(Zoop_Bio_All),
             Zoop_All_Abun_SUM = sum(Zoop_Den_All),
             Zoop_All_Bio_MEAN = mean(Zoop_Bio_All), 
@@ -404,15 +413,16 @@ crazy_Palette <- c("gray0", "green2", "yellow2", "red2", "navy", "saddlebrown", 
 crazy_Palette2 <- c("gray0", "green2", "yellow2", "red2", "navy", "saddlebrown", "magenta3", "cyan3")
 
 #plotting average biomass for all taxa from epi per month 
-gg_BIO_All <- ggplot(Areal_WWC_Sum_Stats, aes(x = Season, y = All_Bio_MEAN, fill = SUMGROUP)) + 
+gg_BIO_All <- ggplot(Whole_WWC_Sum_Stats, aes(x = Season, y = All_Bio_MEAN, fill = SPECCODE)) + 
   geom_bar(color = "black", stat = "identity") + 
   #panel border, axis text and title sizes and orientations
   theme_cowplot() +
+  facet_wrap(~Basin) +
  theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 22), axis.title.y = element_text(size = 26), plot.title = element_blank()) +
 #legend details 
   theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 20)) +
 #palette color for bar fills; see Barbiero for reference
-  scale_fill_manual(values = c(Barb_Palette)) +
+  scale_fill_manual(values = c(Pred_Cla_Palette)) +
   labs(x = "Month", y = "Biomass (m2)") 
   #ylim(0,1.5)
 
@@ -420,14 +430,15 @@ gg_BIO_All <- ggplot(Areal_WWC_Sum_Stats, aes(x = Season, y = All_Bio_MEAN, fill
 #plot the above graph
 gg_BIO_All
 
-#ggsave(filename = 'Areal_WWC_Bio_Sum_Stats.TIFF', plot = gg_BIO_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
+#ggsave(filename = 'Basin_Pred_Cla_WWC_Bio.TIFF', plot = gg_BIO_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
 
 #plotting average density for all taxa from epi per month
-gg_DEN_All <- ggplot(Areal_WWC_Sum_Stats, aes(x = Year, y = All_Den_MEAN, fill = SUMGROUP))  + 
+gg_DEN_All <- ggplot(Whole_WWC_Sum_Stats, aes(x = Season, y = All_Den_MEAN, fill = SPECCODE))  + 
    geom_bar(color = "black", stat = "identity") + 
   #panel border, axis text and title sizes and orientations
   theme_cowplot() +
- theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 22, angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 22), axis.title.y = element_text(size = 26), plot.title = element_blank()) +
+  facet_wrap(~Basin) +
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 22), axis.title.y = element_text(size = 26), plot.title = element_blank()) +
 #legend details 
   theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
 #palette color for bar fills; see Barbiero for reference
@@ -441,7 +452,7 @@ gg_DEN_All <- ggplot(Areal_WWC_Sum_Stats, aes(x = Year, y = All_Den_MEAN, fill =
 #plot the above graph
 gg_DEN_All 
 
-#ggsave(filename = 'Invasive_Zoops_JKC_Sum_Stats.TIFF', plot = gg_DEN_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
+#ggsave(filename = 'Basin_Pred_Cla_WWC_Den.TIFF', plot = gg_DEN_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
 ```
 
 
