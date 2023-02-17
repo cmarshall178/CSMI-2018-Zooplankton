@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 <<<<<<< HEAD
 ---
 title: "Zooplankton 2018 Ontario Analysis"
@@ -30,6 +35,8 @@ library(patchwork)
 Zoop_Bio_Den_New <- read_csv("C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Updated Raw Data/Zoop_Bio_Den_New.csv")
 
 Areal_Bio_Den_Zoop <- read_csv("C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Updated Raw Data/Areal_Bio_Den_Zoop.csv")
+
+#Invasive_Zoops_JKC<- read_csv("C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Updated Raw Data/Station_Data_Summer_JKC.csv")
 
 CountType <- Zoop_Bio_Den_New$CountType
 Strata <- Zoop_Bio_Den_New$Strata
@@ -109,9 +116,9 @@ Complete_Epi_Zoop_Bio_Den_New <- full_join(Epi_Macro_Zeros, Epi_Micro_Zeros, cop
 
 Complete_Areal_Epi_Bio_Den_Zoop <- full_join(Areal_Epi_Macro_Zeros, Areal_Epi_Micro_Zeros, copy = F)
 
-#write.csv(Complete_Epi_Zoop_Bio_Den_New, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/Complete_Epi_Zoop_Bio_Den_New.csv")
+#write.csv(Complete_Epi_Zoop_Bio_Den_New, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/Complete_Epi_Zoop_Bio_Den_New.csv")
 
-#write.csv(Complete_Areal_Epi_Bio_Den_Zoop, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/Complete_Areal_Epi_Bio_Den_Zoop.csv")
+#write.csv(Complete_Areal_Epi_Bio_Den_Zoop, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/Complete_Areal_Epi_Bio_Den_Zoop.csv")
 ```
 
 
@@ -135,7 +142,7 @@ Whole_Epi_Micro_Zeros <- Epi_Micro_Filter %>%
 # Joining Micro and Macro values after including implicit zeros for each Zoop_GENERA per EventCodeKey(proxy for station)
 Whole_Complete_Epi_Zoop_Bio_Den_New <- full_join(Whole_Epi_Macro_Zeros, Whole_Epi_Micro_Zeros, copy = F)
 
-#write.csv(Complete_Epi_Zoop_Bio_Den_New, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/Complete_Epi_Zoop_Bio_Den_New.csv")
+#write.csv(Complete_Epi_Zoop_Bio_Den_New, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/Complete_Epi_Zoop_Bio_Den_New.csv")
 ```
 
 
@@ -150,7 +157,7 @@ Complete_WWC_Zoop_Bio_Den_New <- WWC_Filter %>%
       ungroup %>% 
       complete(nesting(Season, Station, EventID, DN, Lat, Long), SUMGROUP, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
 
-#write.csv(Complete_WWC_Zoop_Bio_Den_New, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Complete_WWC_Zoop_Bio_Den_New.csv")
+#write.csv(Complete_WWC_Zoop_Bio_Den_New, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Complete_WWC_Zoop_Bio_Den_New.csv")
 
 Areal_WWC_Filter <- filter(Areal_Bio_Den_Zoop, Strata == "wwc")
 
@@ -162,7 +169,7 @@ Areal_WWC_Zoop_Bio_Den <- Areal_WWC_Filter %>%
       ungroup %>% 
       complete(nesting(Season, Station, EventCode, DN, Lat, Long, Transect, Basin), SUMGROUP, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
 
-#write.csv(Areal_WWC_Zoop_Bio_Den, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Areal_WWC_Zoop_Bio_Den.csv")
+#write.csv(Areal_WWC_Zoop_Bio_Den, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Areal_WWC_Zoop_Bio_Den.csv")
 ```
 
 
@@ -177,7 +184,7 @@ Whole_Complete_WWC_Zoop_Bio_Den_New <- WWC_Filter %>%
       ungroup %>% 
       complete(nesting(Season, Station, EventID, DN, Lat, Long), SPECCODE, fill = list(Zoop_Bio_Sum = 0, Zoop_Den_Sum = 0))
 
-#write.csv(Complete_WWC_Zoop_Bio_Den_New, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Complete_WWC_Zoop_Bio_Den_New.csv")
+#write.csv(Complete_WWC_Zoop_Bio_Den_New, file = ""C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Complete_WWC_Zoop_Bio_Den_New.csv")
 ```
 
 
@@ -197,6 +204,19 @@ Epi_Sum_Stats <- Complete_Epi_Zoop_Bio_Den_New %>%
             N = n(),
             All_Bio_SE = All_Bio_SD / sqrt(N), 
             All_Den_SE = All_Den_SD / sqrt(N))
+
+
+#Invasive_Zoops_JKC_Sum_Stats <- Invasive_Zoops_JKC %>% 
+  #group_by(Species, Year) %>%
+  #summarise(All_Bio_SUM = sum(`Biomass ug_m3`), 
+            #All_Den_SUM = sum(`Density_m3`),
+            #All_Bio_MEAN = mean(`Biomass ug_m3`), 
+            #All_Den_MEAN = mean(`Density_m3`), 
+            #All_Bio_SD = sd(`Biomass ug_m3`), 
+            #All_Den_SD = sd(`Density_m3`),
+            #N = n(),
+            #All_Bio_SE = All_Bio_SD / sqrt(N), 
+            #All_Den_SE = All_Den_SD / sqrt(N))
 
 #filter(MONTH != "Oct")
 #filter for only Byth and Cerc
@@ -227,11 +247,11 @@ Areal_Epi_Sum_Stats <- Complete_Areal_Epi_Bio_Den_Zoop %>%
             All_Bio_SE = All_Bio_SD / sqrt(N), 
             All_Den_SE = All_Den_SD / sqrt(N))
 
-#write.csv(Epi_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/Epi_Sum_Stats.csv")
+#write.csv(Epi_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/Epi_Sum_Stats.csv")
 
-#write.csv(Whole_Epi_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/PRED_CLA_Epi_Sum_Stats.csv")
+#write.csv(Whole_Epi_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/PRED_CLA_Epi_Sum_Stats.csv")
 
-#write.csv(Areal_Epi_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/Areal_Epi_Sum_Stats.csv")
+#write.csv(Areal_Epi_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/Areal_Epi_Sum_Stats.CSV")
 
 #Not finished with this code yet
 #Stats for all epi zooplankton figures with SE bars
@@ -242,6 +262,13 @@ Epi_All_SUM <- Complete_Epi_Zoop_Bio_Den_New %>%
             Zoop_Den_All = sum(Zoop_Den_Sum)) %>% 
             ungroup %>% 
             complete(nesting(Season, EventID), fill = list(Zoop_Bio_All = 0, Zoop_Den_All = 0))
+
+#Invasive_Zoops_JKC_All_SUM <- Invasive_Zoops_JKC %>%
+  #group_by(Station, Year) %>% 
+  #summarise(Zoop_Bio_All = sum(`Biomass ug_m3`),
+            #Zoop_Den_All = sum(`Density_m3`)) %>% 
+            #ungroup %>% 
+            #complete(nesting(Year, Station), fill = list(Zoop_Bio_All = 0, Zoop_Den_All = 0))
               
 #filter(DN == "D" | DN == "N") %>% filter(MONTH != "Oct") %>% 
 ####################Late fall samples only include micro - haven't included areal density caculations for macro samples yet.
@@ -259,7 +286,20 @@ Epi_All_Stats <- Epi_All_SUM %>%
             Zoop_All_Den_SE = Zoop_All_Abun_SD / sqrt(N))
 
 
-#write.csv(Epi_All_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/Epi/Epi_SumGroup_Macro_All_Stats.csv")
+#Invasive_Zoops_JKC_All_Stats <- Invasive_Zoops_JKC_All_SUM %>%
+  #group_by(Year) %>%
+  #summarise(Zoop_All_Bio_SUM = sum(Zoop_Bio_All),
+            #Zoop_All_Abun_SUM = sum(Zoop_Den_All),
+            #Zoop_All_Bio_MEAN = mean(Zoop_Bio_All), 
+            #Zoop_All_Abun_MEAN = mean(Zoop_Den_All), 
+            #Zoop_All_Bio_SD = sd(Zoop_Bio_All), 
+            #Zoop_All_Abun_SD = sd(Zoop_Den_All),
+            #N = n(),
+            #Zoop_All_Bio_SE = Zoop_All_Bio_SD / sqrt(N), 
+            #Zoop_All_Den_SE = Zoop_All_Abun_SD / sqrt(N))
+
+
+#write.csv(Epi_All_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/EPI/Epi_All_Stats.csv")
 ```
 
 
@@ -312,9 +352,9 @@ Whole_WWC_Sum_Stats$SPECCODE <- factor(Whole_WWC_Sum_Stats$SPECCODE, levels = c(
 
 Areal_WWC_Sum_Stats$SUMGROUP <- factor(Areal_WWC_Sum_Stats$SUMGROUP, levels = c("LIMNO", "CALANOID", "CYCLOPOID", "DAPHNID", "BOSMINID", "NDAP"))
 
-#write.csv(WWC_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/WWC_Sum_Stats")
+#write.csv(WWC_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/WWC_Sum_Stats")
 
-#write.csv(Areal_WWC_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Areal_WWC_Sum_Stats")
+#write.csv(Areal_WWC_Sum_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Areal_WWC_Sum_Stats")
 
 ###WWC_Sum_Stats$SUMGROUP <- factor(WWC_Sum_Stats$SUMGROUP, levels = c("LETKIND", "HOLGIBB", "POYPEDI", "BOSLONG", "EUBCORE", "DAPSP", "DAPRETR", "DAPGALEM", "BYTLONG", "CECPENG", "DIYTHOM", "CYCCOPE", "MESCOPE", "MESEDAX" "TROPRASM", "DIACOPE", "LEOASHL", "LEOMINU", "LEOSICI", "SKIOREG", "EPILACU", "EPICOPE", "LIMCOPE", "LIMMACR"))
 
@@ -341,7 +381,7 @@ WWC_All_Stats <- WWC_All_SUM %>%
             Zoop_All_Den_SE = Zoop_All_Abun_SD / sqrt(N))
 
 
-#write.csv(WWC_All_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/WWC_Sum_Stats")
+#write.csv(WWC_All_Stats, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/WWC_Sum_Stats")
 ```
 
 
@@ -353,6 +393,8 @@ WWC_Sum_Stats$Season <- factor(WWC_Sum_Stats$Season, levels = c("Early Spring", 
 
 Areal_WWC_Sum_Stats$Season <- factor(Areal_WWC_Sum_Stats$Season, levels = c("Early Spring", "Late Spring", "Early Summer", "Summer", "Late Summer", "Early Fall", "Late Fall"))
 
+#Invasive_Zoops_JKC_Sum_Stats$Year <- factor(Invasive_Zoops_JKC_Sum_Stats$Year, levels = c(2012,2013,2014,2015,2016,2017,2018,2019))
+
 # Structure for Barbiero similar color palette
 Barb_Palette <- c("blue2", "cyan3", "yellow2", "red2", "seagreen4", "mediumorchid4")
 Pred_Cla_Palette <- c("orange3", "gray0", "green2", "navy")
@@ -362,40 +404,42 @@ crazy_Palette <- c("gray0", "green2", "yellow2", "red2", "navy", "saddlebrown", 
 crazy_Palette2 <- c("gray0", "green2", "yellow2", "red2", "navy", "saddlebrown", "magenta3", "cyan3")
 
 #plotting average biomass for all taxa from epi per month 
-gg_BIO_All <- ggplot(Areal_WWC_Sum_Stats, aes(x = Season, y = All_Bio_MEAN, fill = SUMGROUP)) + 
+gg_BIO_All <- ggplot(Areal_WWC_Sum_Stats, aes(x = Year, y = All_Bio_MEAN, fill = Species)) + 
   geom_bar(color = "black", stat = "identity") + 
   #panel border, axis text and title sizes and orientations
   theme_cowplot() +
- theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 22), axis.title.y = element_text(size = 26), plot.title = element_blank()) +
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 22, angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 22), axis.title.y = element_text(size = 26), plot.title = element_blank()) +
 #legend details 
   theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 20)) +
 #palette color for bar fills; see Barbiero for reference
   scale_fill_manual(values = c(Barb_Palette)) +
-  labs(x = "Month", y = "Biomass (µg/L)") 
+  labs(x = "Month", y = "Biomass (m2)") 
   #ylim(0,1.5)
 
 #plot the above graph
 gg_BIO_All
 
-#ggsave(filename = 'Areal_WWC_Bio_Sum_Stats.TIFF', plot = gg_BIO_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
+#ggsave(filename = 'Areal_WWC_Bio_Sum_Stats.TIFF', plot = gg_BIO_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
 
 #plotting average density for all taxa from epi per month
-gg_DEN_All <- ggplot(Areal_WWC_Sum_Stats, aes(x = Season, y = All_Den_MEAN, fill = SUMGROUP))  + 
+gg_DEN_All <- ggplot(Invasive_Zoops_JKC_Sum_Stats, aes(x = Year, y = All_Den_MEAN, fill = Species))  + 
    geom_bar(color = "black", stat = "identity") + 
   #panel border, axis text and title sizes and orientations
   theme_cowplot() +
- theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.text.y = element_text(size = 22), axis.title.y = element_text(size = 26), plot.title = element_blank()) +
+ theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 22, angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 22), axis.title.y = element_text(size = 26), plot.title = element_blank()) +
 #legend details 
   theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
 #palette color for bar fills; see Barbiero for reference
   scale_fill_manual(values = c(Barb_Palette)) +
-  labs(x = "Month", y = "Abundance (#/L)")
+  labs(x = "Month", y = "Abundance (m2)") +
+  scale_y_sqrt() +
+  scale_y_break(c(2000, 5000))
   #ylim(0,0.3)
 
 #plot the above graph
 gg_DEN_All 
 
-#ggsave(filename = 'Areal_WWC_Den_Sum_Stats.TIFF', plot = gg_BIO_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
+#ggsave(filename = 'Invasive_Zoops_JKC_Sum_Stats.TIFF', plot = gg_DEN_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
 ```
 
 
@@ -436,7 +480,7 @@ gg_Rel_Zoop_Bio <- ggplot(Areal_WWC_Zoop_Prop, aes(x = Season, y = Zoop_Prop_Bio
 
 gg_Rel_Zoop_Bio
 
-#ggsave(filename = 'Areal_WWC_Bio_Zoop_Prop.TIFF', plot = gg_Rel_Zoop_Bio, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
+#ggsave(filename = 'Areal_WWC_Bio_Zoop_Prop.TIFF', plot = gg_Rel_Zoop_Bio, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
 
 gg_Rel_Zoop_Den <- ggplot(Areal_WWC_Zoop_Prop, aes(x = Season, y = Zoop_Prop_Abun, fill = SUMGROUP)) +
     geom_bar(color = "black", stat = "identity") + 
@@ -451,7 +495,7 @@ gg_Rel_Zoop_Den <- ggplot(Areal_WWC_Zoop_Prop, aes(x = Season, y = Zoop_Prop_Abu
 
 gg_Rel_Zoop_Den 
 
-#ggsave(filename = 'Areal_WWC_Den_Zoop_Prop.TIFF', plot = gg_Rel_Zoop_Den, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
+#ggsave(filename = 'Areal_WWC_Den_Zoop_Prop.TIFF', plot = gg_Rel_Zoop_Den, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
 
 WWC_All_Zoop_Figure <- ggarrange(gg_DEN_All, gg_BIO_All, gg_Rel_Zoop_Den, gg_Rel_Zoop_Bio, 
         labels = c("A", "B", "C", "D"),
@@ -464,7 +508,7 @@ WWC_All_Zoop_Figure <- ggarrange(gg_DEN_All, gg_BIO_All, gg_Rel_Zoop_Den, gg_Rel
 
 WWC_All_Zoop_Figure
 
-#ggsave(filename = 'Areal_WWC_Zoop_Grid.TIFF', plot = WWC_All_Zoop_Figure, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
+#ggsave(filename = 'Areal_WWC_Zoop_Grid.TIFF', plot = WWC_All_Zoop_Figure, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
 ```
 
 ## Zoop genera absolute abundance and biomass
@@ -614,18 +658,20 @@ Epi_All_Zoop_Figure
 
 Epi_All_Stats$Season <- factor(Epi_All_Stats$Season, levels = c("Early Spring", "Late Spring", "Early Summer", "Summer", "Late Summer", "Early Fall"))
 
-gg_DEN_All_Epi_Total <- ggplot(Epi_All_Stats, aes(x = Season, y = Zoop_All_Abun_MEAN))  + 
+Invasive_Zoops_JKC_All_Stats$Year <- factor(Invasive_Zoops_JKC_All_Stats$Year, levels = c(2012,2013,2014,2015,2016,2017,2018,2019))
+
+gg_DEN_All_Epi_Total <- ggplot(Invasive_Zoops_JKC_All_Stats, aes(x = Year, y = Zoop_All_Abun_MEAN))  + 
    geom_bar(color = "black", stat = "identity") + 
   #panel border, axis text and title sizes and orientations
   theme_cowplot() +
   geom_errorbar(aes(ymax = Zoop_All_Abun_MEAN + Zoop_All_Den_SE, ymin = Zoop_All_Abun_MEAN - Zoop_All_Den_SE, position = "identity", width = .25)) +
  theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14, face = "bold", angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 24), axis.title.y = element_text(size = 28), plot.title = element_blank()) +
 #legend details 
-  theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
+  theme(legend.title = element_blank(), legend.position = "top", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
 #palette color for bar fills; see Barbiero for reference
   scale_fill_manual(values = c(Barb_Palette)) +
-  labs(x = "Month", y = "Abundance (#/L)") +
-  ylim(0, 30)
+  labs(x = "Month", y = "Abundance (m3)") 
+  #ylim(0, 30)
 
 gg_DEN_All_Epi_Total
 #ggsave(filename = 'Avg_Den_All_Epi_Total.TIFF', plot = gg_DEN_All_Epi_Total, width = 10, height = 8, path = "E:/CCM Work Files - Desktop Version/CSMI Analysis/Ontario 2018/CCM Zoop Assessment/Figures")
