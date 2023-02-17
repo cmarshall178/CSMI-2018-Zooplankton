@@ -413,7 +413,7 @@ crazy_Palette <- c("gray0", "green2", "yellow2", "red2", "navy", "saddlebrown", 
 crazy_Palette2 <- c("gray0", "green2", "yellow2", "red2", "navy", "saddlebrown", "magenta3", "cyan3")
 
 #plotting average biomass for all taxa from epi per month 
-gg_BIO_All <- ggplot(Whole_WWC_Sum_Stats, aes(x = Season, y = All_Bio_MEAN, fill = SPECCODE)) + 
+gg_BIO_All <- ggplot(Areal_WWC_Sum_Stats, aes(x = Season, y = All_Bio_MEAN, fill = SUMGROUP)) + 
   geom_bar(color = "black", stat = "identity") + 
   #panel border, axis text and title sizes and orientations
   theme_cowplot() +
@@ -422,7 +422,7 @@ gg_BIO_All <- ggplot(Whole_WWC_Sum_Stats, aes(x = Season, y = All_Bio_MEAN, fill
 #legend details 
   theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 20)) +
 #palette color for bar fills; see Barbiero for reference
-  scale_fill_manual(values = c(Pred_Cla_Palette)) +
+  scale_fill_manual(values = c(Barb_Palette)) +
   labs(x = "Month", y = "Biomass (m2)") 
   #ylim(0,1.5)
 
@@ -430,10 +430,10 @@ gg_BIO_All <- ggplot(Whole_WWC_Sum_Stats, aes(x = Season, y = All_Bio_MEAN, fill
 #plot the above graph
 gg_BIO_All
 
-#ggsave(filename = 'Basin_Pred_Cla_WWC_Bio.TIFF', plot = gg_BIO_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
+#ggsave(filename = 'Basin_Areal_WWC_Bio_Sum_Stats.TIFF', plot = gg_BIO_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
 
 #plotting average density for all taxa from epi per month
-gg_DEN_All <- ggplot(Whole_WWC_Sum_Stats, aes(x = Season, y = All_Den_MEAN, fill = SPECCODE))  + 
+gg_DEN_All <- ggplot(Areal_WWC_Sum_Stats, aes(x = Season, y = All_Den_MEAN, fill = SUMGROUP))  + 
    geom_bar(color = "black", stat = "identity") + 
   #panel border, axis text and title sizes and orientations
   theme_cowplot() +
@@ -452,7 +452,7 @@ gg_DEN_All <- ggplot(Whole_WWC_Sum_Stats, aes(x = Season, y = All_Den_MEAN, fill
 #plot the above graph
 gg_DEN_All 
 
-#ggsave(filename = 'Basin_Pred_Cla_WWC_Den.TIFF', plot = gg_DEN_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
+#ggsave(filename = 'Basin_Areal_WWC_Den.TIFF', plot = gg_DEN_All, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
 ```
 
 
@@ -460,55 +460,57 @@ gg_DEN_All
 #code used to group the Zoop_Sum_Stats Mean abundance data for each zoop genera per month and mutate (transform) the mean values into relative abundances
 WWC_Zoop_Prop <-
   Whole_WWC_Sum_Stats %>%
-    select(SPECCODE, Season, All_Bio_MEAN, All_Den_MEAN) %>%
-    group_by(Season)%>%
+    select(SPECCODE, Season, Basin, All_Bio_MEAN, All_Den_MEAN) %>%
+    group_by(Season, Basin)%>%
     mutate(Zoop_Prop_Bio = (All_Bio_MEAN / sum(All_Bio_MEAN) * 100), Zoop_Prop_Abun = (All_Den_MEAN / sum(All_Den_MEAN) * 100))
 
 Areal_WWC_Zoop_Prop <-
   Areal_WWC_Sum_Stats %>%
-    select(SUMGROUP, Season, All_Bio_MEAN, All_Den_MEAN) %>%
-    group_by(Season)%>%
+    select(SUMGROUP, Season, Basin, All_Bio_MEAN, All_Den_MEAN) %>%
+    group_by(Season, Basin)%>%
     mutate(Zoop_Prop_Bio = (All_Bio_MEAN / sum(All_Bio_MEAN) * 100), Zoop_Prop_Abun = (All_Den_MEAN / sum(All_Den_MEAN) * 100))
 
-#write.csv(Pred_Cla_WWC_Zoop_Prop, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/WWC_Sum_Stats")
+#write.csv(WWC_Zoop_Prop, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Basin_Pred_Cla_WWC_Prop")
 
-#write.csv(Areal_WWC_Zoop_Prop, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Areal_WWC_Zoop_Prop")
+#write.csv(Areal_WWC_Zoop_Prop, file = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Processed Data/WWC/Basin_Areal_WWC_Prop")
 ```
 
 
 ```{r zoop genera relative abundance and biomass stack graph, echo = FALSE, warning = FALSE, fig.width = 7, fig.height = 5}
 
-Areal_WWC_Zoop_Prop$Season <- factor(Areal_WWC_Zoop_Prop$Season, levels = c("Early Spring", "Late Spring", "Early Summer", "Summer", "Late Summer", "Early Fall", "Late Fall"))
+Areal_WWC_Zoop_Prop$Season <- factor(WWC_Zoop_Prop$Season, levels = c("Early Spring", "Late Spring", "Early Summer", "Summer", "Late Summer", "Early Fall", "Late Fall"))
 
-gg_Rel_Zoop_Bio <- ggplot(Areal_WWC_Zoop_Prop, aes(x = Season, y = Zoop_Prop_Bio, fill = SUMGROUP)) +
+gg_Rel_Zoop_Bio <- ggplot(WWC_Zoop_Prop, aes(x = Season, y = Zoop_Prop_Bio, fill = SPECCODE)) +
     geom_bar(color = "black", stat = "identity") + 
   theme_cowplot() +
+  facet_wrap(~Basin) +
   #panel border, axis text and title sizes and orientations
  theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14, face = "bold", angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 22), axis.title.y = element_text(size = 26), plot.title = element_blank()) +
 #legend details 
   theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
 #palette color for bar fills; see Barbiero for reference
-  scale_fill_manual(values = c(Barb_Palette)) +
+  scale_fill_manual(values = c(Pred_Cla_Palette)) +
   labs(x = "Month", y = "% Biomass") 
 
 gg_Rel_Zoop_Bio
 
-#ggsave(filename = 'Areal_WWC_Bio_Zoop_Prop.TIFF', plot = gg_Rel_Zoop_Bio, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
+ggsave(filename = 'Basin_WWC_Bio_Zoop_Prop.TIFF', plot = gg_Rel_Zoop_Bio, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Cubic")
 
-gg_Rel_Zoop_Den <- ggplot(Areal_WWC_Zoop_Prop, aes(x = Season, y = Zoop_Prop_Abun, fill = SUMGROUP)) +
+gg_Rel_Zoop_Den <- ggplot(WWC_Zoop_Prop, aes(x = Season, y = Zoop_Prop_Abun, fill = SPECCODE)) +
     geom_bar(color = "black", stat = "identity") + 
   theme_cowplot() +
+  facet_wrap(~Basin) +
   #panel border, axis text and title sizes and orientations
  theme(panel.border = element_rect(linetype = "solid", fill = NA), axis.text.x = element_text(size = 14, face = "bold", angle = 45, vjust = 1, hjust = 1), axis.title.x = element_blank(), axis.text.y = element_text(size = 22), axis.title.y = element_text(size = 26), plot.title = element_blank()) +
 #legend details 
   theme(legend.title = element_blank(), legend.position = "none", legend.box.background = element_rect(), legend.box.margin = margin(3,3,3,3), legend.text = element_text(size = 14)) +
 #palette color for bar fills; see Barbiero for reference
-  scale_fill_manual(values = c(Barb_Palette)) +
+  scale_fill_manual(values = c(Pred_Cla_Palette)) +
   labs(x = "Month", y = "% Abundance") 
 
 gg_Rel_Zoop_Den 
 
-#ggsave(filename = 'Areal_WWC_Den_Zoop_Prop.TIFF', plot = gg_Rel_Zoop_Den, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/Figures/WWC/Areal")
+#ggsave(filename = 'Basin_Areal_WWC_Den_Zoop_Prop.TIFF', plot = gg_Rel_Zoop_Den, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
 
 WWC_All_Zoop_Figure <- ggarrange(gg_DEN_All, gg_BIO_All, gg_Rel_Zoop_Den, gg_Rel_Zoop_Bio, 
         labels = c("A", "B", "C", "D"),
@@ -521,7 +523,7 @@ WWC_All_Zoop_Figure <- ggarrange(gg_DEN_All, gg_BIO_All, gg_Rel_Zoop_Den, gg_Rel
 
 WWC_All_Zoop_Figure
 
-#ggsave(filename = 'Areal_WWC_Zoop_Grid.TIFF', plot = WWC_All_Zoop_Figure, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Areal")
+#ggsave(filename = 'Basin_Areal_WWC_Zoop_Grid.TIFF', plot = WWC_All_Zoop_Figure, width = 10, height = 8, path = "C:/Users/Gl Lab User/Desktop/CSMI 2018 Zooplankton/CSMI-2018-Zooplankton/Figures/WWC/Cubic")
 ```
 
 ## Zoop genera absolute abundance and biomass
